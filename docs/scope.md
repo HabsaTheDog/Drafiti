@@ -36,7 +36,7 @@ For v1:
 
 * Draffiti injects a hidden, repo-defined build profile into every Codex turn from the Tauri backend
 * the first user prompt in a session is pinned as the project brief and resent on follow-up turns to reduce drift
-* the build profile keeps generated apps on the Expo Router + NativeWind + Convex-ready path described in this scope
+* the build profile keeps generated apps on the Expo Router + NativeWind + Convex-ready path described in this scope while also defaulting to responsive phone-and-desktop layouts plus subtle purposeful motion
 * design guidance uses repo-local image assets from `/img` when screens need imagery, with filename-based selection expected because asset titles are usually descriptive
 * the desktop UI shows a read-only summary of the active build profile for transparency, but users do not edit the prompt yet
 * the desktop bridge currently runs Codex with `approvalPolicy: never` plus full local access during active sessions to reduce Windows bootstrap and scaffolding failures, while still setting an app-managed cache/temp area for toolchains such as npm

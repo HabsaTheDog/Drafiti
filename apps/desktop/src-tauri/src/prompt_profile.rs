@@ -112,6 +112,8 @@ mod tests {
     assert!(prompt.contains("Expo Router"));
     assert!(prompt.contains("NativeWind"));
     assert!(prompt.contains("Convex-friendly"));
+    assert!(prompt.contains("phone-sized and desktop-sized screens"));
+    assert!(prompt.contains("cross-platform-safe motion patterns"));
   }
 
   #[test]
@@ -119,6 +121,14 @@ mod tests {
     let prompt = build_system_prompt(prompt_profile());
     assert!(prompt.contains("Use image assets from the repo's /img folder"));
     assert!(prompt.contains("Do not add generated images"));
+    assert!(prompt.contains("purposeful animations"));
+  }
+
+  #[test]
+  fn system_prompt_includes_responsive_motion_defaults() {
+    let prompt = build_system_prompt(prompt_profile());
+    assert!(prompt.contains("subtle default motion"));
+    assert!(prompt.contains("Do not over-animate"));
   }
 
   #[test]

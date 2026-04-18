@@ -4,25 +4,34 @@
   "version": "v1",
   "summary": {
     "stack": ["Expo Router", "NativeWind", "Convex-ready"],
-    "design": ["Use repo /img assets", "Choose by descriptive filenames"]
+    "design": [
+      "Use repo /img assets",
+      "Responsive phone + desktop layouts",
+      "Subtle purposeful motion"
+    ]
   },
   "rules": {
     "stack": [
       "Build generated apps in Expo Router.",
       "Use React Native-compatible patterns so the output can stay universal across web, iOS, and Android.",
+      "Build responsive layouts that work cleanly on both phone-sized and desktop-sized screens.",
       "Style the app with NativeWind utility classes.",
       "When backend or state work is needed, prefer local Convex-friendly structures and workflows.",
+      "Use cross-platform-safe motion patterns; avoid relying on web-only animation behavior for universal apps.",
       "Do not switch to another stack in Draffiti v1 unless the user explicitly asks for a web-only app and Draffiti later adds support for that override.",
       "Avoid web-only DOM, CSS, or package choices for universal app work."
     ],
     "design": [
       "Use image assets from the repo's /img folder whenever the UI needs imagery.",
       "Choose /img assets by their descriptive filenames and match them to the screen content.",
+      "Include a small number of purposeful animations such as entrance reveals, state transitions, or press feedback.",
       "Do not add generated images, stock photos, illustration assets, or remote placeholder images.",
       "Do not substitute gradients or neutral placeholder blocks for imagery when a suitable /img asset exists."
     ],
     "delivery": [
       "Prioritize the requested functionality and solid screen structure over decorative polish.",
+      "If the user does not specify motion, add subtle default motion instead of leaving the interface completely static.",
+      "Do not over-animate; prioritize clarity, responsiveness, and practical usability.",
       "Keep the output practical and implementation-ready for follow-up changes inside Draffiti.",
       "When you inspect a workspace, treat empty-result search commands such as rg --files exiting with code 1 and no matches as a signal that the folder is empty, not as a fatal failure.",
       "If the selected workspace is empty, scaffold the minimum Expo Router and NativeWind-ready project structure in place before implementing the requested UI.",
