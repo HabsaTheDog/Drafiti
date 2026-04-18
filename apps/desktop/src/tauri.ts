@@ -38,6 +38,7 @@ export const desktopApi = {
   startPreview: () => call<PreviewState>("start_preview"),
   stopPreview: () => call<PreviewState>("stop_preview"),
   restartPreview: () => call<PreviewState>("restart_preview"),
+  openPreviewInBrowser: (url: string) => call<void>("open_preview_in_browser", { url }),
   sendTurn: (text: string, model?: string | null) =>
     call<TurnAck>("send_turn", { input: { text, model } }),
   interruptTurn: () => call<TurnAck>("interrupt_turn"),

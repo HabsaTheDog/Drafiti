@@ -151,6 +151,51 @@ struct SendTurnInput {
   model: Option<String>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct PreviewScriptCandidate {
+  script_name: &'static str,
+  source: &'static str,
+  label: &'static str,
+}
+
+const PREVIEW_SCRIPT_CANDIDATES: [PreviewScriptCandidate; 7] = [
+  PreviewScriptCandidate {
+    script_name: "dev",
+    source: "npmDev",
+    label: "npm dev preview",
+  },
+  PreviewScriptCandidate {
+    script_name: "dev:web",
+    source: "npmScript",
+    label: "npm dev:web preview",
+  },
+  PreviewScriptCandidate {
+    script_name: "start:web",
+    source: "npmScript",
+    label: "npm start:web preview",
+  },
+  PreviewScriptCandidate {
+    script_name: "web",
+    source: "npmScript",
+    label: "npm web preview",
+  },
+  PreviewScriptCandidate {
+    script_name: "preview",
+    source: "npmScript",
+    label: "npm preview",
+  },
+  PreviewScriptCandidate {
+    script_name: "start",
+    source: "npmScript",
+    label: "npm start preview",
+  },
+  PreviewScriptCandidate {
+    script_name: "serve",
+    source: "npmScript",
+    label: "npm serve preview",
+  },
+];
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 struct TurnAck {
@@ -1576,6 +1621,11 @@ async fn restart_preview(state: State<'_, AppState>) -> Result<PreviewStatePaylo
 }
 
 #[tauri::command]
+async fn open_preview_in_browser(url: String) -> Result<(), String> {
+  open_url_in_system_browser(&url)
+}
+
+#[tauri::command]
 async fn send_turn(
   state: State<'_, AppState>,
   input: SendTurnInput,
@@ -2080,7 +2130,8 @@ fn resolve_preview_command(
     let Some((first, rest)) = tokens.split_first() else {
       return Err("Preview command is empty.".to_string());
     };
-    let default_url = detect_url_from_command_tokens(&tokens);
+    let default_url =
+      detect_url_from_command_tokens(&tokens).or_else(|| infer_preview_url_from_tokens(&tokens));
     return Ok(Some(ResolvedPreviewCommand {
       executable: preview_executable(first),
       args: rest.to_vec(),
@@ -2119,21 +2170,18 @@ fn resolve_preview_command(
       }));
     }
 
-    if manifest_has_script(&manifest, "dev") {
-      let inferred_default_url = manifest
-        .get("scripts")
-        .and_then(|scripts| scripts.get("dev"))
-        .and_then(Value::as_str)
-        .and_then(infer_preview_url_from_script);
+    if let Some((candidate, script_body)) = resolve_npm_preview_script(&manifest) {
+      let display_command = format!("npm run {}", candidate.script_name);
+      let inferred_default_url = infer_preview_url_from_script(script_body);
       return Ok(Some(ResolvedPreviewCommand {
         executable: preview_executable("npm"),
-        args: vec!["run".to_string(), "dev".to_string()],
-        display_command: "npm run dev".to_string(),
+        args: vec!["run".to_string(), candidate.script_name.to_string()],
+        display_command: display_command.clone(),
         default_url: inferred_default_url.clone(),
         resolution: PreviewCommandResolutionPayload {
-          source: "npmDev".to_string(),
-          label: "npm dev preview".to_string(),
-          command: Some("npm run dev".to_string()),
+          source: candidate.source.to_string(),
+          label: candidate.label.to_string(),
+          command: Some(display_command),
           default_url: inferred_default_url,
         },
       }));
@@ -2252,7 +2300,10 @@ fn preview_executable(name: &str) -> String {
 }
 
 fn detect_url_from_command_tokens(tokens: &[String]) -> Option<String> {
-  if let Some(url) = tokens.iter().find(|token| token.starts_with("http://")) {
+  if let Some(url) = tokens
+    .iter()
+    .find(|token| token.starts_with("http://") || token.starts_with("https://"))
+  {
     return Some(url.clone());
   }
 
@@ -2270,10 +2321,21 @@ fn extract_port_flag(tokens: &[String]) -> Option<String> {
 }
 
 fn extract_host_flag(tokens: &[String]) -> Option<String> {
-  extract_flag_value(tokens, &["--host", "-h", "-H"])
+  extract_flag_value(tokens, &["--host", "--hostname", "-h", "-H"])
 }
 
 fn extract_flag_value(tokens: &[String], flags: &[&str]) -> Option<String> {
+  if let Some(value) = tokens.iter().find_map(|token| {
+    flags.iter().find_map(|flag| {
+      token
+        .strip_prefix(flag)
+        .and_then(|rest| rest.strip_prefix('='))
+        .map(|value| value.to_string())
+    })
+  }) {
+    return Some(value);
+  }
+
   tokens.windows(2).find_map(|window| {
     flags
       .iter()
@@ -2285,7 +2347,58 @@ fn extract_flag_value(tokens: &[String], flags: &[&str]) -> Option<String> {
 fn infer_preview_url_from_script(script: &str) -> Option<String> {
   parse_command_line(script)
     .ok()
-    .and_then(|tokens| detect_url_from_command_tokens(&tokens))
+    .and_then(|tokens| {
+      detect_url_from_command_tokens(&tokens).or_else(|| infer_preview_url_from_tokens(&tokens))
+    })
+}
+
+fn infer_preview_url_from_tokens(tokens: &[String]) -> Option<String> {
+  let host = extract_host_flag(tokens).unwrap_or_else(|| "127.0.0.1".to_string());
+  let normalized_host = normalize_preview_host_for_url(&host);
+  let port = extract_port_flag(tokens).or_else(|| infer_default_preview_port(tokens))?;
+  Some(format!("http://{normalized_host}:{port}"))
+}
+
+fn infer_default_preview_port(tokens: &[String]) -> Option<String> {
+  let has_token = |expected: &str| tokens.iter().any(|token| token_matches_command(token, expected));
+
+  if has_token("expo") && tokens.iter().any(|token| token == "--web") {
+    return Some("8081".to_string());
+  }
+
+  if has_token("vite") {
+    if tokens.iter().any(|token| token.eq_ignore_ascii_case("preview")) {
+      return Some("4173".to_string());
+    }
+
+    return Some("5173".to_string());
+  }
+
+  if has_token("next") {
+    return Some("3000".to_string());
+  }
+
+  if has_token("react-scripts") {
+    return Some("3000".to_string());
+  }
+
+  if has_token("webpack") {
+    return Some("8080".to_string());
+  }
+
+  None
+}
+
+fn token_matches_command(token: &str, expected: &str) -> bool {
+  if token.eq_ignore_ascii_case(expected) {
+    return true;
+  }
+
+  Path::new(token)
+    .file_stem()
+    .and_then(|stem| stem.to_str())
+    .map(|stem| stem.eq_ignore_ascii_case(expected))
+    .unwrap_or(false)
 }
 
 fn normalize_preview_host_for_url(host: &str) -> String {
@@ -2297,6 +2410,76 @@ fn normalize_preview_host_for_url(host: &str) -> String {
   trimmed
     .trim_matches(|character| character == '[' || character == ']')
     .to_string()
+}
+
+fn resolve_npm_preview_script(manifest: &Value) -> Option<(PreviewScriptCandidate, &str)> {
+  PREVIEW_SCRIPT_CANDIDATES.iter().find_map(|candidate| {
+    if !manifest_has_script(manifest, candidate.script_name) {
+      return None;
+    }
+
+    manifest
+      .get("scripts")
+      .and_then(|scripts| scripts.get(candidate.script_name))
+      .and_then(Value::as_str)
+      .map(|script_body| (*candidate, script_body))
+  })
+}
+
+fn open_url_in_system_browser(url: &str) -> Result<(), String> {
+  let normalized = normalize_browser_open_url(url)?;
+
+  #[cfg(target_os = "windows")]
+  let mut command = {
+    let mut command = Command::new("rundll32.exe");
+    command.arg("url.dll,FileProtocolHandler").arg(&normalized);
+    command
+  };
+
+  #[cfg(target_os = "macos")]
+  let mut command = {
+    let mut command = Command::new("open");
+    command.arg(&normalized);
+    command
+  };
+
+  #[cfg(all(unix, not(target_os = "macos")))]
+  let mut command = {
+    let mut command = Command::new("xdg-open");
+    command.arg(&normalized);
+    command
+  };
+
+  #[cfg(not(any(target_os = "windows", target_os = "macos", unix)))]
+  {
+    let _ = normalized;
+    return Err("Opening the system browser is not supported on this platform.".to_string());
+  }
+
+  command
+    .stdin(Stdio::null())
+    .stdout(Stdio::null())
+    .stderr(Stdio::null())
+    .spawn()
+    .map(|_| ())
+    .map_err(|error| format!("Could not open the preview URL in your browser: {error}"))
+}
+
+fn normalize_browser_open_url(url: &str) -> Result<String, String> {
+  let trimmed = url.trim();
+  if trimmed.is_empty() {
+    return Err("Preview URL is empty.".to_string());
+  }
+
+  if trimmed.chars().any(char::is_whitespace) {
+    return Err("Preview URL is invalid.".to_string());
+  }
+
+  if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+    return Ok(trimmed.to_string());
+  }
+
+  Err("Preview URL must use http:// or https://.".to_string())
 }
 
 fn read_json_file(path: &Path) -> Result<Value, String> {
@@ -2569,6 +2752,7 @@ pub fn run() {
       start_preview,
       stop_preview,
       restart_preview,
+      open_preview_in_browser,
       send_turn,
       interrupt_turn
     ])
@@ -2578,13 +2762,14 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-  use super::{
-    apply_codex_runtime_env, build_codex_global_args, detect_preview_url,
-    diff_workspace_snapshots, idle_preview_state_for_workspace, infer_preview_url_from_script,
-    manifest_has_dependency, manifest_has_script, normalize_optional_string, parse_command_line,
-    parse_response_id, stable_workspace_token, CodexRuntimePaths, CodexStatus,
-    PersistedSettings, SessionRuntimeState, WorkspaceFileSnapshot, WorkspaceSnapshot,
-  };
+    use super::{
+      apply_codex_runtime_env, build_codex_global_args, detect_preview_url,
+      diff_workspace_snapshots, idle_preview_state_for_workspace, infer_preview_url_from_script,
+      manifest_has_dependency, manifest_has_script, normalize_browser_open_url,
+      normalize_optional_string, parse_command_line, parse_response_id,
+      resolve_npm_preview_script, stable_workspace_token, CodexRuntimePaths, CodexStatus,
+      PersistedSettings, SessionRuntimeState, WorkspaceFileSnapshot, WorkspaceSnapshot,
+    };
   use crate::prompt_profile::{build_turn_input, prompt_profile, SessionPromptContext};
   use serde_json::json;
   use std::{collections::HashMap, process::Command};
@@ -2739,11 +2924,67 @@ mod tests {
   }
 
   #[test]
+  fn infers_preview_url_from_common_dev_server_defaults() {
+    assert_eq!(
+      infer_preview_url_from_script("vite"),
+      Some("http://127.0.0.1:5173".to_string())
+    );
+    assert_eq!(
+      infer_preview_url_from_script("vite preview"),
+      Some("http://127.0.0.1:4173".to_string())
+    );
+    assert_eq!(
+      infer_preview_url_from_script("next dev --hostname=0.0.0.0"),
+      Some("http://127.0.0.1:3000".to_string())
+    );
+    assert_eq!(
+      infer_preview_url_from_script("react-scripts start"),
+      Some("http://127.0.0.1:3000".to_string())
+    );
+  }
+
+  #[test]
   fn preview_url_detection_trims_sentence_punctuation() {
     assert_eq!(
       detect_preview_url("Reusing existing desktop dev server at http://127.0.0.1:1420."),
       Some("http://127.0.0.1:1420".to_string())
     );
+  }
+
+  #[test]
+  fn resolves_preview_script_fallbacks_in_priority_order() {
+    let manifest = json!({
+      "scripts": {
+        "preview": "vite preview",
+        "start": "node server.js"
+      }
+    });
+    let (candidate, script_body) =
+      resolve_npm_preview_script(&manifest).expect("preview script should resolve");
+    assert_eq!(candidate.script_name, "preview");
+    assert_eq!(candidate.source, "npmScript");
+    assert_eq!(script_body, "vite preview");
+
+    let manifest = json!({
+      "scripts": {
+        "dev": "vite",
+        "preview": "vite preview"
+      }
+    });
+    let (candidate, _) =
+      resolve_npm_preview_script(&manifest).expect("dev script should resolve");
+    assert_eq!(candidate.script_name, "dev");
+    assert_eq!(candidate.source, "npmDev");
+  }
+
+  #[test]
+  fn browser_open_url_validation_rejects_invalid_values() {
+    assert_eq!(
+      normalize_browser_open_url("http://127.0.0.1:4173"),
+      Ok("http://127.0.0.1:4173".to_string())
+    );
+    assert!(normalize_browser_open_url("localhost:4173").is_err());
+    assert!(normalize_browser_open_url("http://127.0.0.1:4173 path").is_err());
   }
 
   #[test]

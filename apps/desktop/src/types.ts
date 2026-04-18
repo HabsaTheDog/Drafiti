@@ -1,7 +1,7 @@
 export type CodexStatusKind = "ready" | "unauthenticated" | "notInstalled" | "error";
 export type SessionStatus = "disconnected" | "connecting" | "ready" | "running" | "error";
 export type PreviewStatus = "idle" | "booting" | "ready" | "crashed";
-export type PreviewCommandSource = "manual" | "expo" | "npmDev" | "none";
+export type PreviewCommandSource = "manual" | "expo" | "npmDev" | "npmScript" | "none";
 export type PreviewViewportMode = "desktop" | "phone";
 
 export interface CodexStatus {

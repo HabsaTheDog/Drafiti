@@ -37,6 +37,7 @@ For v1:
 * Draffiti injects a hidden, repo-defined build profile into every Codex turn from the Tauri backend
 * the first user prompt in a session is pinned as the project brief and resent on follow-up turns to reduce drift
 * the build profile keeps generated apps on the Expo Router + NativeWind + Convex-ready path described in this scope while also defaulting to responsive phone-and-desktop layouts plus subtle purposeful motion
+* the build profile now also requires the runnable app to stay at the selected workspace root with a working root `package.json` and `npm run dev` preview entrypoint unless the user explicitly asks for a different repo layout
 * design guidance uses repo-local image assets from `/img` when screens need imagery, with filename-based selection expected because asset titles are usually descriptive
 * the desktop UI shows a read-only summary of the active build profile for transparency, but users do not edit the prompt yet
 * the desktop bridge currently runs Codex with `approvalPolicy: never` plus full local access during active sessions to reduce Windows bootstrap and scaffolding failures, while still setting an app-managed cache/temp area for toolchains such as npm
@@ -107,8 +108,10 @@ The UI explicitly communicates the agent's internal state to build trust:
 
 * **Local Iframe:** Points to the local Expo server (typically `localhost:8081`).
 * **Watchdog Layer:** A React wrapper pings the local port; if the server is booting or has crashed, it shows a branded skeleton loader/building state instead of a browser error.
-* **Current milestone behavior:** Draffiti auto-detects either an Expo web preview command or a generic `npm run dev` command for the picked workspace, while also allowing a manual override preview command in settings. Generic `npm run dev` detection should not force a synthetic port anymore; it should infer a URL from the declared script when possible and otherwise follow the URL printed by the dev server so wrapper scripts still preview correctly.
+* **Current milestone behavior:** Draffiti auto-detects an Expo web preview command first, then a root npm preview script for the picked workspace in a fixed fallback order (`dev`, `dev:web`, `start:web`, `web`, `preview`, `start`, `serve`), while also allowing a manual override preview command in settings. URL inference should prefer explicit script flags, fall back to common dev-server defaults when needed, and otherwise follow the URL printed by the dev server so wrapper scripts still preview correctly.
+* **Browser handoff:** The preview toolbar opens the resolved preview URL in the system browser through the desktop backend instead of relying on webview `window.open` behavior.
 * **Viewport switcher:** The preview footer includes desktop and phone viewport buttons that resize the local iframe canvas without restarting the preview process, letting users inspect responsive output inside the same live session.
+* **Narrow-width shell behavior:** On narrow app widths, the chat/preview tab bar must stay stacked above the workspace canvas and preview toolbar actions must wrap instead of squeezing the iframe off-screen.
 
 ### 6.2.1. Prompt Change Visibility
 

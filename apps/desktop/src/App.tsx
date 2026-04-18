@@ -4,7 +4,6 @@ import { CodexSidebar } from "./components/CodexSidebar";
 import { PreviewWorkspace } from "./components/PreviewWorkspace";
 import { ShellLayout } from "./components/ShellLayout";
 import { disconnectedSession, initialState, reducer } from "./reducer";
-import { buildProfileHighlights, codexBuildProfile } from "./promptProfile";
 import { desktopApi } from "./tauri";
 
 const MODEL_SUGGESTIONS = ["gpt-5.4", "gpt-5.3-codex", "gpt-5.2", "o4-mini"];
@@ -321,14 +320,20 @@ export default function App() {
     }
   }
 
-  function handleOpenPreview() {
-    if (state.preview.url) {
-      window.open(state.preview.url, "_blank", "noopener,noreferrer");
+  async function handleOpenPreview() {
+    if (!state.preview.url) {
+      return;
+    }
+
+    try {
+      await desktopApi.openPreviewInBrowser(state.preview.url);
+    } catch (error) {
+      pushLocalError(describeError(error, "Could not open the preview in your browser."));
     }
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-transparent text-sand-100">
+    <main className="h-screen overflow-hidden bg-transparent text-cloud-100">
       <div className="mx-auto flex h-full max-w-[1800px] flex-col px-4 py-4 sm:px-6 lg:px-8">
         <ShellLayout
           activeView={state.activeView}
@@ -358,8 +363,6 @@ export default function App() {
               canSend={canSend}
               canInterrupt={canInterrupt}
               modelSuggestions={MODEL_SUGGESTIONS}
-              buildProfile={codexBuildProfile}
-              buildProfileHighlights={buildProfileHighlights}
               onPickWorkspace={handlePickWorkspace}
               onRefreshStatus={handleRefreshStatus}
               onConnect={handleConnect}
