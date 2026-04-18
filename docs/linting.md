@@ -2,6 +2,12 @@
 
 This file is the quick reference for the repository validation flow.
 
+## Current Build Status
+
+The Windows desktop build and dev flow should currently be treated as broken when the repository or selected workspace lives under a non-ASCII path.
+
+The current checkout path (`C:\Users\user1\OneDrive\Документи\Development Alvaro\Draffiti`) matches that failure mode, so local desktop build and validation work from this checkout is considered broken until the repo is moved to an ASCII-only path or Windows short-path aliases are available.
+
 Current root commands:
 
 * `npm run desktop:dev`
