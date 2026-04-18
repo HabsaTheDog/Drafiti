@@ -6,6 +6,7 @@ import type {
   CodexEventEnvelope,
   CodexSettingsInput,
   CodexStatus,
+  PreviewState,
   SessionState,
   TurnAck,
   WorkspaceSelection,
@@ -28,12 +29,17 @@ export const desktopApi = {
   bootstrap: () => call<BootstrapState>("bootstrap"),
   pickWorkspace: () => call<WorkspaceSelection>("pick_workspace"),
   refreshCodexStatus: () => call<CodexStatus>("refresh_codex_status"),
+  refreshPreviewState: () => call<PreviewState>("refresh_preview_state"),
   updateCodexSettings: (input: CodexSettingsInput) =>
     call<BootstrapState>("update_codex_settings", { input }),
-  connectCodex: (workspacePath: string) =>
-    call<SessionState>("connect_codex", { input: { workspacePath } }),
+  connectCodex: (workspacePath: string, model?: string | null) =>
+    call<SessionState>("connect_codex", { input: { workspacePath, model } }),
   disconnectCodex: () => call<SessionState>("disconnect_codex"),
-  sendTurn: (text: string) => call<TurnAck>("send_turn", { input: { text } }),
+  startPreview: () => call<PreviewState>("start_preview"),
+  stopPreview: () => call<PreviewState>("stop_preview"),
+  restartPreview: () => call<PreviewState>("restart_preview"),
+  sendTurn: (text: string, model?: string | null) =>
+    call<TurnAck>("send_turn", { input: { text, model } }),
   interruptTurn: () => call<TurnAck>("interrupt_turn"),
   listenCodexEvents: async (
     handler: (event: CodexEventEnvelope) => void,

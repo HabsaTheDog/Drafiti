@@ -14,14 +14,32 @@ The repository is intentionally starting narrower than the full product vision a
 The current first-pass milestone is:
 
 * a single Tauri desktop workspace at `apps/desktop`
-* a Codex-only chat shell
+* a Codex-only desktop shell with a persistent operator/chat rail and a managed website preview workspace
 * one picked local workspace folder per session
 * local Codex CLI readiness checks and pre-existing CLI auth checks
-* a single streaming transcript without preview, history, Git time travel, Convex bootstrap, or multi-provider support yet
+* per-prompt Codex model selection, with automatic session reconnect when the selected model changes
+* a managed local website preview lifecycle for the picked workspace, including detected dev commands, reachability polling, and boot/crash states
+* a single streaming transcript with prompt-to-prompt workspace change summaries, but still without Git time travel, Convex bootstrap, or multi-provider support
 * on Windows, Codex CLI discovery should work against standard npm global shims such as `%APPDATA%\\npm\\codex.cmd` instead of assuming a Unix-style executable name only
+* on Windows, the desktop bridge should give Codex a managed app-local npm cache and temp directory so package installs and scaffolding do not depend on OneDrive-synced or user-global cache paths
 * the Codex desktop bridge must stay aligned with the live Codex app-server request contract, including current sandbox enum formats for `thread/start` and `turn/start`
 
 This keeps the initial build focused on a reliable Codex desktop bridge before layering in the broader app-builder scope.
+
+### Current Codex Prompt Policy
+
+The current desktop milestone also uses a fixed Draffiti-owned Codex build profile.
+
+For v1:
+
+* Draffiti injects a hidden, repo-defined build profile into every Codex turn from the Tauri backend
+* the first user prompt in a session is pinned as the project brief and resent on follow-up turns to reduce drift
+* the build profile keeps generated apps on the Expo Router + NativeWind + Convex-ready path described in this scope
+* design guidance uses repo-local image assets from `/img` when screens need imagery, with filename-based selection expected because asset titles are usually descriptive
+* the desktop UI shows a read-only summary of the active build profile for transparency, but users do not edit the prompt yet
+* the desktop bridge currently runs Codex with `approvalPolicy: never` plus full local access during active sessions to reduce Windows bootstrap and scaffolding failures, while still setting an app-managed cache/temp area for toolchains such as npm
+* the prompt policy tells Codex to treat empty-workspace inspection misses as non-fatal, scaffold a minimal app when the picked folder is blank, and retry bootstrap commands with a fallback before aborting
+* the desktop transcript suppresses low-signal Codex and scaffolding stderr noise such as blank-output exit summaries, npm log-path dumps, and known transient Windows bootstrap parser noise, while real turn and session failures still surface as errors
 
 ## 2. Platform Architecture (The Engine)
 
@@ -59,7 +77,7 @@ To keep the initial download tiny (<10MB):
 ### 4.3. Sandboxed File System Execution
 
 * **No Shell Execution:** Rust executes binaries directly (avoiding `sh -c`) to neutralize shell injection attacks.
-* **Root Jail:** The Rust subprocess strictly locks the Current Working Directory to the generated project folder.
+* **Current milestone note:** Draffiti currently starts Codex turns in full-access mode to avoid local bootstrap failures during the first desktop milestone, even though the longer-term target remains tighter workspace sandboxing.
 
 ## 5. Version Control & Database Syncing (Indestructible Sandbox)
 
@@ -87,6 +105,12 @@ The UI explicitly communicates the agent's internal state to build trust:
 
 * **Local Iframe:** Points to the local Expo server (typically `localhost:8081`).
 * **Watchdog Layer:** A React wrapper pings the local port; if the server is booting or has crashed, it shows a branded skeleton loader/building state instead of a browser error.
+* **Current milestone behavior:** Draffiti auto-detects either an Expo web preview command or a generic `npm run dev` command for the picked workspace, while also allowing a manual override preview command in settings. Generic `npm run dev` detection should not force a synthetic port anymore; it should infer a URL from the declared script when possible and otherwise follow the URL printed by the dev server so wrapper scripts still preview correctly.
+
+### 6.2.1. Prompt Change Visibility
+
+* **Prompt summaries:** After each completed Codex turn, Draffiti compares the workspace snapshot from before and after the turn and inserts a compact change summary card into the transcript.
+* **Preview mirror:** The latest prompt change summary is also mirrored below the preview so users can see what changed without opening a full diff viewer yet.
 
 ### 6.3. Robust Click-to-Prompt
 
