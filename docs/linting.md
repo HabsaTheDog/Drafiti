@@ -4,6 +4,7 @@ This file is the quick reference for the repository validation flow.
 
 Current root commands:
 
+* `npm run desktop:dev`
 * `npm run lint`
 * `npm run lint:fix`
 * `npm run typecheck`
@@ -17,10 +18,15 @@ Expected agent behavior:
 
 Current behavior:
 
+* `npm run desktop:dev` runs the Tauri desktop workspace in dev mode from the repo root and, on Windows, also loads the Visual Studio native build environment automatically when `vcvars64.bat` is available
 * `npm run lint` runs Markdown linting, code linting, and Rust linting
+* the Rust lint step now also attempts to load the Visual Studio native build environment automatically on Windows before running Cargo
+* Windows desktop and Rust validation scripts default `CARGO_BUILD_JOBS=1` when the variable is unset, reducing peak RAM usage during local Tauri compilation; set `CARGO_BUILD_JOBS` yourself to override it
 * `npm run typecheck` skips cleanly if no TypeScript project exists yet
 * Rust lint skips cleanly if no `Cargo.toml` files exist yet
+* once the desktop Tauri workspace exists, `npm run lint` requires a working Rust toolchain and the native Windows/macOS/Linux linker prerequisites needed by Cargo for that platform
 * root Markdown lint now excludes nested workspace `node_modules` directories explicitly
+* root Markdown lint also excludes Rust `target` directories so generated Cargo artifacts do not fail repository doc validation
 * root package validation auto-discovers nested package workspaces and runs their `lint`, `lint:fix`, and `typecheck` scripts when present
 * this is the mechanism that validates the desktop workspace and Expo sandbox template once those workspaces exist in the repository
 

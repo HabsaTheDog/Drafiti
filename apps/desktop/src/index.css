@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  color: #f8f7f2;
+  background:
+    radial-gradient(circle at top left, rgba(238, 106, 79, 0.24), transparent 28%),
+    radial-gradient(circle at top right, rgba(76, 129, 197, 0.16), transparent 22%),
+    linear-gradient(180deg, #111414 0%, #181d1c 56%, #101313 100%);
+  font-family:
+    "IBM Plex Sans",
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+@theme {
+  --color-ink-950: #101313;
+  --color-ink-900: #141918;
+  --color-ink-800: #1e2523;
+  --color-ink-700: #2a3330;
+  --color-ink-500: #8b9993;
+  --color-sand-100: #f8f7f2;
+  --color-sand-200: #e8e3d4;
+  --color-sand-300: #d0c7b4;
+  --color-flare-400: #ee6a4f;
+  --color-flare-500: #d95235;
+  --color-signal-400: #62be8a;
+  --color-signal-500: #2d9d62;
+  --color-sky-400: #4c81c5;
+}
+
+.scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(208, 199, 180, 0.22) transparent;
+}
+
+.scrollbar-subtle::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-subtle::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(208, 199, 180, 0.22);
+}

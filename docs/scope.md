@@ -7,6 +7,22 @@ An open-source, downloadable desktop application designed to be a next-generatio
 * **Non-technical users ("Base" Tier):** Frictionless, instant, real-time app prototyping using natural language with zero setup required.
 * **Developers ("Pro" Tier):** An intelligent scaffolding tool that generates production-ready code for scalable web and native mobile applications, bypassing tedious boilerplate and preserving exact layouts.
 
+## Current Implementation Milestone
+
+The repository is intentionally starting narrower than the full product vision above.
+
+The current first-pass milestone is:
+
+* a single Tauri desktop workspace at `apps/desktop`
+* a Codex-only chat shell
+* one picked local workspace folder per session
+* local Codex CLI readiness checks and pre-existing CLI auth checks
+* a single streaming transcript without preview, history, Git time travel, Convex bootstrap, or multi-provider support yet
+* on Windows, Codex CLI discovery should work against standard npm global shims such as `%APPDATA%\\npm\\codex.cmd` instead of assuming a Unix-style executable name only
+* the Codex desktop bridge must stay aligned with the live Codex app-server request contract, including current sandbox enum formats for `thread/start` and `turn/start`
+
+This keeps the initial build focused on a reliable Codex desktop bridge before layering in the broader app-builder scope.
+
 ## 2. Platform Architecture (The Engine)
 
 This is the tech stack used to build the desktop application itself.

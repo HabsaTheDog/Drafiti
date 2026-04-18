@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   cargoExecutable,
+  createToolchainEnv,
   findFilesByName,
   repoRoot,
   runCommand
@@ -38,6 +39,7 @@ const selectedManifests = manifests.filter((manifest) => {
 });
 
 const cargo = cargoExecutable();
+const env = createToolchainEnv();
 
 for (const manifest of selectedManifests) {
   const args =
@@ -54,7 +56,7 @@ for (const manifest of selectedManifests) {
         ]
       : ["fmt", "--all", "--manifest-path", manifest.filePath];
 
-  const exitCode = runCommand(cargo, args, manifest.dir);
+  const exitCode = runCommand(cargo, args, manifest.dir, env);
   if (exitCode !== 0) {
     process.exit(exitCode);
   }

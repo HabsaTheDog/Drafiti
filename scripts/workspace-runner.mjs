@@ -1,7 +1,7 @@
 import path from "node:path";
 import {
   findFilesByName,
-  npmExecutable,
+  npmCommand,
   readJson,
   relativeFromRoot,
   repoRoot,
@@ -42,10 +42,10 @@ if (workspaces.length === 0) {
   process.exit(0);
 }
 
-const npm = npmExecutable();
+const npm = npmCommand();
 
 for (const workspace of workspaces) {
-  const exitCode = runCommand(npm, ["run", scriptName], workspace.dir);
+  const exitCode = runCommand(npm.command, [...npm.argsPrefix, "run", scriptName], workspace.dir);
   if (exitCode !== 0) {
     process.exit(exitCode);
   }
