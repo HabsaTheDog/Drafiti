@@ -30,6 +30,13 @@ use tokio::{sync::oneshot, time::timeout};
 use uuid::Uuid;
 #[cfg(windows)]
 use windows_sys::Win32::Storage::FileSystem::GetShortPathNameW;
+#[cfg(windows)]
+use windows_sys::Win32::{
+  UI::{
+    Shell::ShellExecuteW,
+    WindowsAndMessaging::SW_SHOWNORMAL,
+  },
+};
 
 use crate::prompt_profile::{build_turn_input, prompt_profile, SessionPromptContext};
 
@@ -2430,39 +2437,60 @@ fn open_url_in_system_browser(url: &str) -> Result<(), String> {
   let normalized = normalize_browser_open_url(url)?;
 
   #[cfg(target_os = "windows")]
-  let mut command = {
-    let mut command = Command::new("rundll32.exe");
-    command.arg("url.dll,FileProtocolHandler").arg(&normalized);
-    command
-  };
+  {
+    let operation = "open\0".encode_utf16().collect::<Vec<u16>>();
+    let target = format!("{normalized}\0").encode_utf16().collect::<Vec<u16>>();
+    let result = unsafe {
+      ShellExecuteW(
+        std::ptr::null_mut(),
+        operation.as_ptr(),
+        target.as_ptr(),
+        std::ptr::null(),
+        std::ptr::null(),
+        SW_SHOWNORMAL,
+      )
+    } as isize;
+
+    if result <= 32 {
+      return Err(format!(
+        "Could not open the preview URL in your browser: Windows shell error {result}."
+      ));
+    }
+
+    Ok(())
+  }
 
   #[cfg(target_os = "macos")]
-  let mut command = {
+  {
     let mut command = Command::new("open");
     command.arg(&normalized);
-    command
-  };
+    return command
+      .stdin(Stdio::null())
+      .stdout(Stdio::null())
+      .stderr(Stdio::null())
+      .spawn()
+      .map(|_| ())
+      .map_err(|error| format!("Could not open the preview URL in your browser: {error}"));
+  }
 
   #[cfg(all(unix, not(target_os = "macos")))]
-  let mut command = {
+  {
     let mut command = Command::new("xdg-open");
     command.arg(&normalized);
-    command
-  };
+    return command
+      .stdin(Stdio::null())
+      .stdout(Stdio::null())
+      .stderr(Stdio::null())
+      .spawn()
+      .map(|_| ())
+      .map_err(|error| format!("Could not open the preview URL in your browser: {error}"));
+  }
 
   #[cfg(not(any(target_os = "windows", target_os = "macos", unix)))]
   {
     let _ = normalized;
     return Err("Opening the system browser is not supported on this platform.".to_string());
   }
-
-  command
-    .stdin(Stdio::null())
-    .stdout(Stdio::null())
-    .stderr(Stdio::null())
-    .spawn()
-    .map(|_| ())
-    .map_err(|error| format!("Could not open the preview URL in your browser: {error}"))
 }
 
 fn normalize_browser_open_url(url: &str) -> Result<String, String> {

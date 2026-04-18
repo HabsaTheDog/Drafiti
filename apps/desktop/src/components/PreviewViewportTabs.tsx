@@ -7,8 +7,8 @@ interface PreviewViewportTabsProps {
 
 function buttonTone(active: boolean) {
   return active
-    ? "border-white/20 bg-sand-100 text-ink-950 shadow-[0_10px_22px_rgba(241,237,230,0.18)]"
-    : "border-white/10 bg-white/4 text-sand-200 hover:bg-white/8";
+    ? "bg-brand-gradient text-ink-950 border-transparent shadow-[0_4px_14px_rgba(76,224,235,0.16)]"
+    : "border-white/[0.08] bg-white/[0.03] text-cloud-300 hover:bg-white/[0.06]";
 }
 
 function MonitorIcon() {
@@ -54,34 +54,31 @@ export function PreviewViewportTabs({
   onPreviewViewportModeChange,
 }: PreviewViewportTabsProps) {
   return (
-    <div className="space-y-2">
-      <p className="text-[11px] uppercase tracking-[0.28em] text-sand-300/44">Viewport</p>
-      <div className="inline-flex rounded-[24px] border border-white/10 bg-black/18 p-1">
-        <button
-          type="button"
-          aria-label="Desktop preview"
-          aria-pressed={previewViewportMode === "desktop"}
-          className={`inline-flex items-center gap-2 rounded-[18px] border px-4 py-2.5 text-sm font-medium transition ${buttonTone(
-            previewViewportMode === "desktop",
-          )}`}
-          onClick={() => onPreviewViewportModeChange("desktop")}
-        >
-          <MonitorIcon />
-          Desktop
-        </button>
-        <button
-          type="button"
-          aria-label="Phone preview"
-          aria-pressed={previewViewportMode === "phone"}
-          className={`inline-flex items-center gap-2 rounded-[18px] border px-4 py-2.5 text-sm font-medium transition ${buttonTone(
-            previewViewportMode === "phone",
-          )}`}
-          onClick={() => onPreviewViewportModeChange("phone")}
-        >
-          <PhoneIcon />
-          Phone
-        </button>
-      </div>
+    <div className="inline-flex rounded-xl border border-white/[0.06] bg-ink-900/40 p-0.5">
+      <button
+        type="button"
+        aria-label="Desktop preview"
+        aria-pressed={previewViewportMode === "desktop"}
+        className={`inline-flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-xs font-medium transition ${buttonTone(
+          previewViewportMode === "desktop",
+        )}`}
+        onClick={() => onPreviewViewportModeChange("desktop")}
+      >
+        <MonitorIcon />
+        Desktop
+      </button>
+      <button
+        type="button"
+        aria-label="Phone preview"
+        aria-pressed={previewViewportMode === "phone"}
+        className={`inline-flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-xs font-medium transition ${buttonTone(
+          previewViewportMode === "phone",
+        )}`}
+        onClick={() => onPreviewViewportModeChange("phone")}
+      >
+        <PhoneIcon />
+        Phone
+      </button>
     </div>
   );
 }

@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  color: #f8f7f2;
+  color: #f0f4f8;
   background:
-    radial-gradient(circle at top left, rgba(238, 106, 79, 0.24), transparent 28%),
-    radial-gradient(circle at top right, rgba(76, 129, 197, 0.16), transparent 22%),
-    linear-gradient(180deg, #111414 0%, #181d1c 56%, #101313 100%);
+    radial-gradient(circle at top left, rgba(76, 224, 235, 0.18), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(177, 104, 232, 0.14), transparent 30%),
+    linear-gradient(180deg, #0c1117 0%, #111820 56%, #0c1117 100%);
   font-family:
-    "IBM Plex Sans",
+    "Inter",
     "Segoe UI",
+    system-ui,
     sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -42,31 +43,98 @@ button {
 }
 
 @theme {
-  --color-ink-950: #101313;
-  --color-ink-900: #141918;
-  --color-ink-800: #1e2523;
-  --color-ink-700: #2a3330;
-  --color-ink-500: #8b9993;
-  --color-sand-100: #f8f7f2;
-  --color-sand-200: #e8e3d4;
-  --color-sand-300: #d0c7b4;
-  --color-flare-400: #ee6a4f;
-  --color-flare-500: #d95235;
+  /* Brand core */
+  --color-cyan-300: #7AEDF5;
+  --color-cyan-400: #4CE0EB;
+  --color-cyan-500: #2CC5D0;
+  --color-purple-300: #C98CF0;
+  --color-purple-400: #B168E8;
+  --color-purple-500: #9B4FD8;
+  --color-purple-600: #8436C8;
+
+  /* Dark backgrounds — blue-tinted to complement the palette */
+  --color-ink-950: #0c1117;
+  --color-ink-900: #111820;
+  --color-ink-800: #182028;
+  --color-ink-700: #1f2a34;
+  --color-ink-600: #2a3744;
+
+  /* Slate (from brand outline color) */
+  --color-slate-600: #2E5A6C;
+  --color-slate-500: #3B7088;
+
+  /* Light / text */
+  --color-cloud-50: #FFFFFF;
+  --color-cloud-100: #F0F4F8;
+  --color-cloud-200: #D8DEE6;
+  --color-cloud-300: #B0BCCA;
+
+  /* Semantic */
   --color-signal-400: #62be8a;
   --color-signal-500: #2d9d62;
-  --color-sky-400: #4c81c5;
+  --color-danger-400: #F06B6B;
+  --color-danger-500: #D94545;
 }
 
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, #4CE0EB 0%, #B168E8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Brand gradient background for buttons */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #4CE0EB 0%, #B168E8 100%);
+}
+
+.bg-brand-gradient:hover {
+  background: linear-gradient(135deg, #7AEDF5 0%, #C98CF0 100%);
+}
+
+/* Subtle status pulse */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Shimmer for loading states */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(76, 224, 235, 0.06) 0%,
+    rgba(177, 104, 232, 0.12) 50%,
+    rgba(76, 224, 235, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.4s linear infinite;
+}
+
+/* Scrollbar */
 .scrollbar-subtle {
   scrollbar-width: thin;
-  scrollbar-color: rgba(208, 199, 180, 0.22) transparent;
+  scrollbar-color: rgba(76, 224, 235, 0.18) transparent;
 }
 
 .scrollbar-subtle::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .scrollbar-subtle::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(208, 199, 180, 0.22);
+  background: rgba(76, 224, 235, 0.18);
+}
+
+.scrollbar-subtle::-webkit-scrollbar-thumb:hover {
+  background: rgba(76, 224, 235, 0.32);
 }

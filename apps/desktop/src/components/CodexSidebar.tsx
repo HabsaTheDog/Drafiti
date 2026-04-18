@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 
-import type { ChatMessage, CodexStatus, PromptProfile, SessionState } from "../types";
+import type { ChatMessage, CodexStatus, SessionState } from "../types";
 import { CodexHeader } from "./CodexHeader";
 import { ComposerBar } from "./ComposerBar";
 import { SettingsPanel } from "./SettingsPanel";
@@ -30,8 +30,6 @@ interface CodexSidebarProps {
   canSend: boolean;
   canInterrupt: boolean;
   modelSuggestions: string[];
-  buildProfile: PromptProfile;
-  buildProfileHighlights: string[];
   onPickWorkspace: () => void;
   onRefreshStatus: () => void;
   onConnect: () => void;
@@ -48,6 +46,24 @@ interface CodexSidebarProps {
   onSaveSettings: () => void;
 }
 
+function GearIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+      <path d="M10 1.5v2m0 13v2m-7.07-3.93 1.41-1.41m11.32-5.32 1.41-1.41M1.5 10h2m13 0h2M4.34 4.34l1.41 1.41m8.5 8.5 1.41 1.41" />
+    </svg>
+  );
+}
+
 export function CodexSidebar({
   bootstrapping,
   bootstrapError,
@@ -57,31 +73,23 @@ export function CodexSidebar({
   messages,
   transcriptRef,
   composer,
-  selectedModel,
   defaultModel,
   codexBinaryPath,
   codexHomePath,
   previewCommand,
   settingsOpen,
   isConnecting,
-  isRefreshingStatus,
   isSavingSettings,
   isSending,
-  isSwitchingModel,
   canConnect,
   canSend,
   canInterrupt,
-  modelSuggestions,
-  buildProfile,
-  buildProfileHighlights,
   onPickWorkspace,
-  onRefreshStatus,
   onConnect,
   onDisconnect,
   onSend,
   onInterrupt,
   onComposerChange,
-  onSelectedModelChange,
   onCodexBinaryPathChange,
   onCodexHomePathChange,
   onDefaultModelChange,
@@ -90,39 +98,51 @@ export function CodexSidebar({
   onSaveSettings,
 }: CodexSidebarProps) {
   return (
-    <div className="flex h-full min-h-0 flex-col bg-ink-950/72">
-      <CodexHeader
-        workspacePath={workspacePath}
-        codexStatus={codexStatus}
-        session={session}
-        selectedModel={selectedModel || defaultModel}
-        buildProfile={buildProfile}
-        buildProfileHighlights={buildProfileHighlights}
-        onPickWorkspace={onPickWorkspace}
-        onRefreshStatus={onRefreshStatus}
-        onConnect={onConnect}
-        onDisconnect={onDisconnect}
-        isConnecting={isConnecting}
-        isRefreshingStatus={isRefreshingStatus}
-        canConnect={canConnect}
-      />
-
-      <div className="border-b border-white/8 px-5 py-3">
-        <SettingsPanel
-          codexBinaryPath={codexBinaryPath}
-          codexHomePath={codexHomePath}
-          defaultModel={defaultModel}
-          previewCommand={previewCommand}
-          open={settingsOpen}
-          isSaving={isSavingSettings}
-          onOpenChange={onSettingsOpenChange}
-          onCodexBinaryPathChange={onCodexBinaryPathChange}
-          onCodexHomePathChange={onCodexHomePathChange}
-          onDefaultModelChange={onDefaultModelChange}
-          onPreviewCommandChange={onPreviewCommandChange}
-          onSave={onSaveSettings}
+    <div className="flex h-full min-h-0 flex-col bg-ink-950/60">
+      {/* Header + gear button row */}
+      <div className="relative">
+        <CodexHeader
+          workspacePath={workspacePath}
+          codexStatus={codexStatus}
+          session={session}
+          onPickWorkspace={onPickWorkspace}
+          onConnect={onConnect}
+          onDisconnect={onDisconnect}
+          isConnecting={isConnecting}
+          canConnect={canConnect}
         />
+        {/* Gear icon to toggle settings */}
+        <button
+          type="button"
+          className={`absolute right-5 bottom-3 rounded-lg p-1.5 text-cloud-300/50 transition hover:bg-white/[0.06] hover:text-cloud-100 ${
+            settingsOpen ? "text-cyan-400" : ""
+          }`}
+          onClick={() => onSettingsOpenChange(!settingsOpen)}
+          aria-label="Toggle settings"
+        >
+          <GearIcon />
+        </button>
       </div>
+
+      {/* Collapsible settings */}
+      {settingsOpen ? (
+        <div className="border-b border-white/[0.06] px-5 py-3">
+          <SettingsPanel
+            codexBinaryPath={codexBinaryPath}
+            codexHomePath={codexHomePath}
+            defaultModel={defaultModel}
+            previewCommand={previewCommand}
+            open={settingsOpen}
+            isSaving={isSavingSettings}
+            onOpenChange={onSettingsOpenChange}
+            onCodexBinaryPathChange={onCodexBinaryPathChange}
+            onCodexHomePathChange={onCodexHomePathChange}
+            onDefaultModelChange={onDefaultModelChange}
+            onPreviewCommandChange={onPreviewCommandChange}
+            onSave={onSaveSettings}
+          />
+        </div>
+      ) : null}
 
       <TranscriptTimeline
         bootstrapping={bootstrapping}
@@ -133,15 +153,11 @@ export function CodexSidebar({
 
       <ComposerBar
         composer={composer}
-        selectedModel={selectedModel}
         sessionConnected={session.connected}
         isSending={isSending}
-        isSwitchingModel={isSwitchingModel}
         canSend={canSend}
         canInterrupt={canInterrupt}
-        modelSuggestions={modelSuggestions}
         onComposerChange={onComposerChange}
-        onSelectedModelChange={onSelectedModelChange}
         onSend={onSend}
         onInterrupt={onInterrupt}
       />

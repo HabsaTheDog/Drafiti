@@ -1,35 +1,57 @@
 interface ComposerBarProps {
   composer: string;
-  selectedModel: string;
   sessionConnected: boolean;
   isSending: boolean;
-  isSwitchingModel: boolean;
   canSend: boolean;
   canInterrupt: boolean;
-  modelSuggestions: string[];
   onComposerChange: (value: string) => void;
-  onSelectedModelChange: (value: string) => void;
   onSend: () => void;
   onInterrupt: () => void;
 }
 
+function SendIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12 2 3l18 7-18 7 3-9Zm0 0h7" />
+    </svg>
+  );
+}
+
+function StopIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="h-3.5 w-3.5"
+      fill="currentColor"
+    >
+      <rect x="4" y="4" width="12" height="12" rx="2" />
+    </svg>
+  );
+}
+
 export function ComposerBar({
   composer,
-  selectedModel,
   sessionConnected,
   isSending,
-  isSwitchingModel,
   canSend,
   canInterrupt,
-  modelSuggestions,
   onComposerChange,
-  onSelectedModelChange,
   onSend,
   onInterrupt,
 }: ComposerBarProps) {
   return (
-    <footer className="border-t border-white/8 px-5 py-5">
-      <div className="rounded-[28px] border border-white/10 bg-black/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <footer className="border-t border-white/[0.06] px-4 py-4">
+      <div className="rounded-2xl border border-white/[0.08] bg-ink-900/60 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
         <textarea
           value={composer}
           onChange={(event) => onComposerChange(event.target.value)}
@@ -42,55 +64,37 @@ export function ComposerBar({
           disabled={!sessionConnected}
           placeholder={
             sessionConnected
-              ? "Describe what you want Codex to build or change..."
-              : "Connect to Codex to start chatting."
+              ? "Describe what you want to build or change…"
+              : "Connect to start chatting."
           }
-          className="min-h-28 w-full resize-none bg-transparent text-sm leading-7 text-sand-100 outline-none placeholder:text-sand-300/34 disabled:cursor-not-allowed"
+          className="min-h-20 w-full resize-none bg-transparent text-sm leading-6 text-cloud-100 outline-none placeholder:text-cloud-300/30 disabled:cursor-not-allowed"
         />
 
-        <div className="mt-4 grid gap-3 border-t border-white/8 pt-4">
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-            <label className="block">
-              <span className="mb-1 block text-[11px] uppercase tracking-[0.26em] text-sand-300/48">
-                Prompt model
-              </span>
-              <input
-                list="draffiti-model-suggestions"
-                value={selectedModel}
-                onChange={(event) => onSelectedModelChange(event.target.value)}
-                placeholder="Use saved default model"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-sand-100 outline-none transition focus:border-sky-400/55"
-              />
-              <datalist id="draffiti-model-suggestions">
-                {modelSuggestions.map((model) => (
-                  <option key={model} value={model} />
-                ))}
-              </datalist>
-            </label>
+        <div className="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-3">
+          <span className="text-[10px] tracking-wide text-cloud-300/30">
+            ⌘ + Enter to send
+          </span>
 
-            <div className="flex gap-3 xl:self-end">
+          <div className="flex items-center gap-2">
+            {canInterrupt ? (
               <button
                 type="button"
-                className="rounded-2xl border border-white/10 bg-white/4 px-4 py-3 text-sm transition hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-cloud-200 transition hover:bg-white/[0.07]"
                 onClick={onInterrupt}
-                disabled={!canInterrupt}
               >
+                <StopIcon />
                 Stop
               </button>
-              <button
-                type="button"
-                className="rounded-2xl bg-flare-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-flare-400 disabled:cursor-not-allowed disabled:bg-flare-500/35"
-                onClick={onSend}
-                disabled={!canSend}
-              >
-                {isSending ? "Sending..." : "Send prompt"}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 text-[11px] uppercase tracking-[0.24em] text-sand-300/42 sm:flex-row sm:items-center sm:justify-between">
-            <span>Send with Ctrl/Cmd + Enter</span>
-            {isSwitchingModel ? <span>Reconnecting for model change...</span> : null}
+            ) : null}
+            <button
+              type="button"
+              className="bg-brand-gradient inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-ink-950 transition disabled:cursor-not-allowed disabled:opacity-35"
+              onClick={onSend}
+              disabled={!canSend}
+            >
+              <SendIcon />
+              {isSending ? "Sending…" : "Send"}
+            </button>
           </div>
         </div>
       </div>

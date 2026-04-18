@@ -34,6 +34,6 @@ describe("TranscriptTimeline", () => {
     expect(screen.getByText("Build a homepage")).toBeInTheDocument();
     expect(screen.getByText("I split this up.")).toBeInTheDocument();
     expect(screen.getByText("npm ERR! could not determine executable to run")).not.toBeVisible();
-    expect(screen.getByText("Diagnostics hidden (1)")).toBeInTheDocument();
+    expect(screen.getByText(/Diagnostics \(1\)/)).toBeInTheDocument();
   });
 });

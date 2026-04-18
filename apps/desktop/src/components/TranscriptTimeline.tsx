@@ -3,18 +3,35 @@ import type { RefObject } from "react";
 import type { ChatMessage } from "../types";
 import { ChangeSummaryCard } from "./ChangeSummaryCard";
 
+import logoIcon from "../assets/draffiti-icon.png";
+
 function tone(kind: ChatMessage["kind"]) {
   switch (kind) {
     case "user":
-      return "ml-auto border-sky-400/28 bg-sky-400/12";
+      return "ml-auto border-cyan-400/20 bg-cyan-400/[0.08]";
     case "assistant":
-      return "mr-auto border-white/10 bg-white/6";
+      return "mr-auto border-purple-400/16 bg-purple-400/[0.06]";
     case "error":
-      return "mr-auto border-flare-500/28 bg-flare-500/12";
+      return "mr-auto border-danger-400/24 bg-danger-400/[0.08]";
     case "system":
-      return "mx-auto border-sand-300/10 bg-ink-700/50";
+      return "mx-auto border-white/[0.06] bg-ink-700/40";
     default:
-      return "border-amber-400/22 bg-amber-300/8";
+      return "border-purple-400/16 bg-purple-400/[0.06]";
+  }
+}
+
+function kindLabel(kind: ChatMessage["kind"]) {
+  switch (kind) {
+    case "user":
+      return "You";
+    case "assistant":
+      return "Codex";
+    case "system":
+      return "System";
+    case "error":
+      return "Error";
+    default:
+      return kind;
   }
 }
 
@@ -35,23 +52,29 @@ export function TranscriptTimeline({
   const diagnostics = messages.filter((message) => message.kind === "error");
 
   return (
-    <div ref={transcriptRef} className="scrollbar-subtle flex-1 space-y-4 overflow-y-auto px-5 py-5">
+    <div ref={transcriptRef} className="scrollbar-subtle flex-1 space-y-3 overflow-y-auto px-4 py-4">
       {bootstrapping ? (
-        <div className="rounded-[28px] border border-white/8 bg-white/4 p-6 text-sm text-sand-200/72">
-          Loading Draffiti desktop shell...
+        <div className="animate-shimmer rounded-2xl border border-white/[0.06] p-5 text-sm text-cloud-200/70">
+          Initializing Draffiti…
         </div>
       ) : bootstrapError ? (
-        <div className="rounded-[28px] border border-flare-500/24 bg-flare-500/10 p-6 text-sm text-flare-400">
+        <div className="rounded-2xl border border-danger-400/20 bg-danger-400/[0.08] p-5 text-sm text-danger-400">
           {bootstrapError}
         </div>
       ) : visibleMessages.length === 0 ? (
-        <div className="flex min-h-[20rem] items-center justify-center">
-          <div className="max-w-md rounded-[30px] border border-dashed border-white/10 bg-white/3 p-8 text-center">
-            <p className="text-[11px] uppercase tracking-[0.34em] text-sand-300/42">Transcript</p>
-            <h2 className="mt-3 font-serif text-3xl text-sand-100">Prompt, watch, iterate.</h2>
-            <p className="mt-3 text-sm leading-7 text-sand-200/68">
-              Pick a folder, connect Codex, and the transcript will track the build plus the
-              summary of what changed between turns.
+        <div className="flex min-h-[18rem] items-center justify-center">
+          <div className="max-w-sm rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] p-8 text-center">
+            <img
+              src={logoIcon}
+              alt=""
+              className="mx-auto mb-4 h-16 w-16 opacity-60"
+            />
+            <h2 className="text-gradient text-2xl font-bold">
+              Prompt, watch, iterate.
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-cloud-300/50">
+              Pick a folder, connect Codex, and start building. The transcript will track every
+              change.
             </p>
           </div>
         </div>
@@ -62,33 +85,33 @@ export function TranscriptTimeline({
           ) : (
             <article
               key={message.id}
-              className={`max-w-3xl rounded-[28px] border px-5 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.18)] ${tone(
-                message.kind,
-              )}`}
+              className={`max-w-2xl rounded-2xl border px-4 py-3 ${tone(message.kind)}`}
             >
-              <div className="mb-2 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.24em] text-sand-300/52">
-                <span>{message.kind}</span>
-                {message.pending ? <span>streaming</span> : null}
+              <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] font-medium uppercase tracking-[0.18em] text-cloud-300/40">
+                <span>{kindLabel(message.kind)}</span>
+                {message.pending ? (
+                  <span className="animate-status-pulse text-cyan-400/70">streaming</span>
+                ) : null}
               </div>
-              <pre className="m-0 whitespace-pre-wrap break-words font-[inherit] text-sm leading-7 text-sand-100">
-                {message.text || (message.pending ? "..." : "")}
+              <pre className="m-0 whitespace-pre-wrap break-words font-[inherit] text-sm leading-6 text-cloud-100">
+                {message.text || (message.pending ? "…" : "")}
               </pre>
             </article>
           ),
         )
       )}
       {diagnostics.length > 0 ? (
-        <details className="rounded-[24px] border border-white/8 bg-white/3 px-4 py-3">
-          <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.24em] text-sand-300/56">
-            Diagnostics hidden ({diagnostics.length})
+        <details className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <summary className="cursor-pointer list-none text-[10px] font-medium uppercase tracking-[0.18em] text-cloud-300/40">
+            Diagnostics ({diagnostics.length})
           </summary>
-          <div className="mt-3 space-y-3">
+          <div className="mt-3 space-y-2">
             {diagnostics.map((message) => (
               <article
                 key={message.id}
-                className="rounded-[20px] border border-flare-500/18 bg-flare-500/8 px-4 py-3 text-sm text-flare-300/84"
+                className="rounded-xl border border-danger-400/14 bg-danger-400/[0.06] px-3 py-2.5 text-sm text-danger-400/80"
               >
-                <pre className="m-0 whitespace-pre-wrap break-words font-[inherit] leading-6">
+                <pre className="m-0 whitespace-pre-wrap break-words font-[inherit] leading-5">
                   {message.text}
                 </pre>
               </article>

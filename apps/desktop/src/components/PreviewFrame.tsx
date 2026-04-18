@@ -1,5 +1,7 @@
 import type { PreviewState, PreviewViewportMode } from "../types";
 
+import logoIcon from "../assets/draffiti-icon.png";
+
 interface PreviewFrameProps {
   preview: PreviewState;
   previewViewportMode: PreviewViewportMode;
@@ -14,12 +16,12 @@ export function PreviewFrame({ preview, previewViewportMode }: PreviewFrameProps
           data-viewport-mode={previewViewportMode}
           className={`relative flex h-full min-h-0 w-full justify-center overflow-hidden transition-[max-width,padding,transform,border-radius] duration-300 ease-out ${
             previewViewportMode === "phone"
-              ? "max-w-[390px] rounded-[36px] border border-white/12 bg-ink-950/92 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.38)]"
+              ? "max-w-[390px] rounded-[36px] border border-white/[0.1] bg-ink-950/90 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
               : "max-w-full"
           }`}
         >
           {previewViewportMode === "phone" ? (
-            <div className="pointer-events-none absolute left-1/2 top-3 z-10 h-1.5 w-20 -translate-x-1/2 rounded-full bg-white/14" />
+            <div className="pointer-events-none absolute left-1/2 top-3 z-10 h-1.5 w-20 -translate-x-1/2 rounded-full bg-white/[0.12]" />
           ) : null}
           <iframe
             key={preview.url}
@@ -28,7 +30,7 @@ export function PreviewFrame({ preview, previewViewportMode }: PreviewFrameProps
             className={`block h-full min-h-0 w-full bg-white ${
               previewViewportMode === "phone"
                 ? "rounded-[30px]"
-                : "rounded-[28px] border border-white/8"
+                : "rounded-2xl border border-white/[0.06]"
             }`}
           />
         </div>
@@ -38,13 +40,16 @@ export function PreviewFrame({ preview, previewViewportMode }: PreviewFrameProps
 
   if (preview.status === "booting") {
     return (
-      <div className="flex h-full min-h-[38rem] items-center justify-center rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(76,129,197,0.18),transparent_35%),rgba(255,255,255,0.03)] p-10 text-center">
-        <div className="max-w-lg">
-          <p className="text-[11px] uppercase tracking-[0.34em] text-sand-300/44">Booting preview</p>
-          <h2 className="mt-4 font-serif text-4xl text-sand-100">Waiting for the local site to come up.</h2>
-          <p className="mt-3 text-sm leading-7 text-sand-200/72">
-            Draffiti is watching the local dev server and will swap this panel to the live site as
-            soon as it responds.
+      <div className="flex h-full min-h-[34rem] items-center justify-center rounded-2xl border border-white/[0.08] bg-[radial-gradient(circle_at_center,rgba(76,224,235,0.1),transparent_50%)] p-10 text-center">
+        <div className="max-w-md">
+          <img
+            src={logoIcon}
+            alt=""
+            className="mx-auto mb-5 h-16 w-16 animate-status-pulse opacity-70"
+          />
+          <h2 className="text-gradient text-3xl font-bold">Starting preview...</h2>
+          <p className="mt-3 text-sm leading-6 text-cloud-300/60">
+            Watching the local dev server. The live site will appear here as soon as it responds.
           </p>
         </div>
       </div>
@@ -53,11 +58,13 @@ export function PreviewFrame({ preview, previewViewportMode }: PreviewFrameProps
 
   if (preview.status === "crashed") {
     return (
-      <div className="flex h-full min-h-[38rem] items-center justify-center rounded-[28px] border border-flare-500/24 bg-flare-500/8 p-10 text-center">
-        <div className="max-w-lg">
-          <p className="text-[11px] uppercase tracking-[0.34em] text-flare-300/74">Preview error</p>
-          <h2 className="mt-4 font-serif text-4xl text-sand-100">The local preview is down.</h2>
-          <p className="mt-3 text-sm leading-7 text-sand-200/72">
+      <div className="flex h-full min-h-[34rem] items-center justify-center rounded-2xl border border-danger-400/20 bg-danger-400/[0.05] p-10 text-center">
+        <div className="max-w-md">
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-danger-400/70">
+            Preview error
+          </p>
+          <h2 className="mt-3 text-2xl font-bold text-cloud-100">The preview is down.</h2>
+          <p className="mt-3 text-sm leading-6 text-cloud-300/60">
             {preview.lastError ?? "The preview server exited before it became reachable."}
           </p>
         </div>
@@ -66,11 +73,11 @@ export function PreviewFrame({ preview, previewViewportMode }: PreviewFrameProps
   }
 
   return (
-    <div className="flex h-full min-h-[38rem] items-center justify-center rounded-[28px] border border-dashed border-white/10 bg-white/3 p-10 text-center">
-      <div className="max-w-lg">
-        <p className="text-[11px] uppercase tracking-[0.34em] text-sand-300/44">Preview idle</p>
-        <h2 className="mt-4 font-serif text-4xl text-sand-100">Start the local site preview.</h2>
-        <p className="mt-3 text-sm leading-7 text-sand-200/72">
+    <div className="flex h-full min-h-[34rem] items-center justify-center rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] p-10 text-center">
+      <div className="max-w-md">
+        <img src={logoIcon} alt="" className="mx-auto mb-5 h-14 w-14 opacity-40" />
+        <h2 className="text-gradient text-2xl font-bold">Start the preview</h2>
+        <p className="mt-3 text-sm leading-6 text-cloud-300/50">
           {preview.command
             ? `Ready to run: ${preview.command}`
             : preview.lastError ?? "Pick a workspace or define a preview command in settings."}

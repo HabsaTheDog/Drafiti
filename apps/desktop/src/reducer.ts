@@ -115,7 +115,7 @@ type Action =
 function makeMessage(
   kind: ChatMessage["kind"],
   text: string,
-  extras?: Pick<ChatMessage, "turnId" | "pending" | "changeSummary" | "id">,
+  extras?: Partial<Pick<ChatMessage, "turnId" | "pending" | "changeSummary" | "id">>,
 ): ChatMessage {
   return {
     id: extras?.id ?? `${kind}:${crypto.randomUUID()}`,

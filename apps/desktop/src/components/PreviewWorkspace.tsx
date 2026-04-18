@@ -31,7 +31,7 @@ export function PreviewWorkspace({
   onOpen,
 }: PreviewWorkspaceProps) {
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[radial-gradient(circle_at_top,rgba(217,82,53,0.14),transparent_28%),radial-gradient(circle_at_top_right,rgba(76,129,197,0.18),transparent_24%),linear-gradient(180deg,rgba(16,19,19,0.98),rgba(20,25,24,0.96))]">
+    <div className="flex h-full min-h-0 flex-col bg-[radial-gradient(circle_at_top,rgba(76,224,235,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(177,104,232,0.08),transparent_28%),linear-gradient(180deg,rgba(12,17,23,0.98),rgba(17,24,32,0.96))]">
       <PreviewToolbar
         workspacePath={workspacePath}
         preview={preview}
@@ -42,7 +42,7 @@ export function PreviewWorkspace({
         onStop={onStop}
         onOpen={onOpen}
       />
-      <div className="flex min-h-0 flex-1 px-5 py-5">
+      <div className="flex min-h-0 flex-1 px-4 py-4">
         <PreviewFrame preview={preview} previewViewportMode={previewViewportMode} />
       </div>
       <PreviewFooterSummary

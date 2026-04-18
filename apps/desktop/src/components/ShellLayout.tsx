@@ -14,17 +14,17 @@ export function ShellLayout({
   preview,
 }: ShellLayoutProps) {
   return (
-    <section className="flex min-h-0 flex-1 overflow-hidden rounded-[32px] border border-white/10 bg-ink-950/78 shadow-[0_28px_90px_rgba(0,0,0,0.42)] backdrop-blur-xl">
-      <div className="border-b border-white/8 px-4 py-3 lg:hidden">
-        <div className="inline-flex rounded-2xl border border-white/10 bg-black/18 p-1">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-ink-950/70 shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
+      <div className="border-b border-white/[0.06] px-4 py-2.5 lg:hidden">
+        <div className="inline-flex rounded-xl border border-white/[0.08] bg-ink-900/60 p-0.5">
           {(["chat", "preview"] as const).map((view) => (
             <button
               key={view}
               type="button"
-              className={`rounded-xl px-4 py-2 text-sm transition ${
+              className={`rounded-[10px] px-4 py-2 text-sm font-medium transition ${
                 activeView === view
-                  ? "bg-sand-100 text-ink-950"
-                  : "text-sand-300/72 hover:bg-white/7"
+                  ? "bg-brand-gradient text-ink-950"
+                  : "text-cloud-300/60 hover:bg-white/[0.05]"
               }`}
               onClick={() => onActiveViewChange(view)}
             >
@@ -34,14 +34,14 @@ export function ShellLayout({
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(26rem,30rem)_minmax(0,1fr)]">
+      <div className="grid min-h-0 min-w-0 flex-1 lg:grid-cols-[minmax(24rem,28rem)_minmax(0,1fr)]">
         <aside
-          className={`${activeView === "chat" ? "block" : "hidden"} min-h-0 border-r border-white/8 lg:block`}
+          className={`${activeView === "chat" ? "block" : "hidden"} min-h-0 border-r border-white/[0.06] lg:block`}
         >
           {sidebar}
         </aside>
         <section
-          className={`${activeView === "preview" ? "block" : "hidden"} min-h-0 lg:block`}
+          className={`${activeView === "preview" ? "block" : "hidden"} min-h-0 min-w-0 lg:block`}
         >
           {preview}
         </section>

@@ -11,23 +11,29 @@ function formatCapturedAt(value: string) {
 
 export function ChangeSummaryCard({ summary }: { summary: ChangeSummary }) {
   return (
-    <article className="max-w-3xl rounded-[28px] border border-amber-400/24 bg-amber-300/10 px-5 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.18)]">
-      <div className="mb-2 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.24em] text-amber-100/72">
+    <article className="max-w-2xl rounded-2xl border border-purple-400/18 bg-purple-400/[0.07] px-4 py-3">
+      <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] font-medium uppercase tracking-[0.18em] text-purple-300/60">
         <span>Changes</span>
         <span>{formatCapturedAt(summary.capturedAt)}</span>
       </div>
-      <h3 className="text-base font-semibold text-sand-100">{summary.summary}</h3>
-      <div className="mt-3 grid gap-2 text-sm text-sand-200/82 sm:grid-cols-3">
-        <div>Added: {summary.added.length}</div>
-        <div>Modified: {summary.modified.length}</div>
-        <div>Deleted: {summary.deleted.length}</div>
+      <h3 className="text-sm font-semibold text-cloud-100">{summary.summary}</h3>
+      <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-cloud-200/70">
+        <span className="rounded-full border border-signal-500/20 bg-signal-500/10 px-2.5 py-1">
+          +{summary.added.length}
+        </span>
+        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1">
+          ~{summary.modified.length}
+        </span>
+        <span className="rounded-full border border-danger-400/20 bg-danger-400/10 px-2.5 py-1">
+          -{summary.deleted.length}
+        </span>
       </div>
       {summary.changedFiles.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {summary.changedFiles.slice(0, 5).map((path) => (
             <span
               key={path}
-              className="rounded-full border border-white/12 bg-black/18 px-3 py-1.5 text-xs text-sand-100"
+              className="rounded-full border border-white/[0.08] bg-ink-800/60 px-2.5 py-1 text-xs text-cloud-200/70"
             >
               {path}
             </span>
