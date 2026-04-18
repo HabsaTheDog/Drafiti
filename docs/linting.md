@@ -19,6 +19,7 @@ Expected agent behavior:
 Current behavior:
 
 * `npm run desktop:dev` runs the Tauri desktop workspace in dev mode from the repo root and, on Windows, also loads the Visual Studio native build environment automatically when `vcvars64.bat` is available
+* the desktop workspace `npm run dev` wrapper now reuses an already-running Vite server on port `1420`, including older localhost or IPv6 listeners from earlier runs, instead of failing immediately on a stale-port restart; if some other process owns that port, it exits with a direct conflict message
 * `npm run lint` runs Markdown linting, code linting, and Rust linting
 * the Rust lint step now also attempts to load the Visual Studio native build environment automatically on Windows before running Cargo
 * Windows desktop and Rust validation scripts default `CARGO_BUILD_JOBS=1` when the variable is unset, reducing peak RAM usage during local Tauri compilation; set `CARGO_BUILD_JOBS` yourself to override it
