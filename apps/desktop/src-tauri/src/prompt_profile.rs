@@ -134,6 +134,8 @@ mod tests {
   #[test]
   fn system_prompt_includes_empty_workspace_recovery_rules() {
     let prompt = build_system_prompt(prompt_profile());
+    assert!(prompt.contains("workspace root"));
+    assert!(prompt.contains("npm run dev"));
     assert!(prompt.contains("rg --files"));
     assert!(prompt.contains("If the selected workspace is empty"));
     assert!(prompt.contains("retry with a concrete fallback"));

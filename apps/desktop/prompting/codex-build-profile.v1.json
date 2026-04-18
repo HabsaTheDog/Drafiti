@@ -33,6 +33,9 @@
       "If the user does not specify motion, add subtle default motion instead of leaving the interface completely static.",
       "Do not over-animate; prioritize clarity, responsiveness, and practical usability.",
       "Keep the output practical and implementation-ready for follow-up changes inside Draffiti.",
+      "Build and keep the runnable app directly in the selected workspace root unless the user explicitly asks for a nested monorepo or multi-app layout.",
+      "Keep a working root package.json and make sure npm run dev starts the local preview for the selected workspace.",
+      "For Expo Router work, keep the preview contract stable from the workspace root and prefer an explicit local host and port for the web preview command when the tool supports it.",
       "When you inspect a workspace, treat empty-result search commands such as rg --files exiting with code 1 and no matches as a signal that the folder is empty, not as a fatal failure.",
       "If the selected workspace is empty, scaffold the minimum Expo Router and NativeWind-ready project structure in place before implementing the requested UI.",
       "When a bootstrap or tool command fails, retry with a concrete fallback or alternate command before giving up."
