@@ -50,6 +50,106 @@ describe("reduceCodexEvent", () => {
     });
   });
 
+  it("splits assistant output into separate transcript bubbles on paragraph breaks", () => {
+    const started = reduceCodexEvent(initialState, {
+      id: "split-1",
+      method: "turn/started",
+      message: null,
+      delta: null,
+      status: "running",
+      turnId: "turn-split",
+      threadId: "thread-1",
+      activeModel: "gpt-5.4",
+      preview: null,
+      changeSummary: null,
+    });
+
+    const next = reduceCodexEvent(started, {
+      id: "split-2",
+      method: "item/agentMessage/delta",
+      message: null,
+      delta: "Plan the layout.\n\nBuild the header.\n\nRun lint.",
+      status: null,
+      turnId: "turn-split",
+      threadId: "thread-1",
+      activeModel: "gpt-5.4",
+      preview: null,
+      changeSummary: null,
+    });
+
+    expect(next.messages).toHaveLength(3);
+    expect(next.messages.map((message) => message.text)).toEqual([
+      "Plan the layout.",
+      "Build the header.",
+      "Run lint.",
+    ]);
+    expect(next.messages.map((message) => message.pending)).toEqual([false, false, true]);
+  });
+
+  it("keeps fenced code blocks inside the same assistant bubble", () => {
+    const started = reduceCodexEvent(initialState, {
+      id: "code-1",
+      method: "turn/started",
+      message: null,
+      delta: null,
+      status: "running",
+      turnId: "turn-code",
+      threadId: "thread-1",
+      activeModel: "gpt-5.4",
+      preview: null,
+      changeSummary: null,
+    });
+
+    const next = reduceCodexEvent(started, {
+      id: "code-2",
+      method: "item/agentMessage/delta",
+      message: null,
+      delta: "Here is the patch.\n\n```ts\nconst value = 1;\n\nconst next = 2;\n```\n\nRun lint.",
+      status: null,
+      turnId: "turn-code",
+      threadId: "thread-1",
+      activeModel: "gpt-5.4",
+      preview: null,
+      changeSummary: null,
+    });
+
+    expect(next.messages).toHaveLength(3);
+    expect(next.messages[1]?.text).toContain("const next = 2;");
+    expect(next.messages[1]?.text).toContain("```ts");
+  });
+
+  it("chunks oversized plain-text paragraphs into multiple assistant bubbles", () => {
+    const started = reduceCodexEvent(initialState, {
+      id: "chunk-1",
+      method: "turn/started",
+      message: null,
+      delta: null,
+      status: "running",
+      turnId: "turn-chunk",
+      threadId: "thread-1",
+      activeModel: "gpt-5.4",
+      preview: null,
+      changeSummary: null,
+    });
+
+    const next = reduceCodexEvent(started, {
+      id: "chunk-2",
+      method: "item/agentMessage/delta",
+      message: null,
+      delta:
+        "First I will inspect the current transcript flow and confirm how deltas are stitched together so the UI stops rendering one oversized wall of text. Then I will split long prose into smaller readable updates without touching code blocks or markdown structure. After that I will move stderr noise out of the main rail so the transcript reads cleanly during normal work.",
+      status: null,
+      turnId: "turn-chunk",
+      threadId: "thread-1",
+      activeModel: "gpt-5.4",
+      preview: null,
+      changeSummary: null,
+    });
+
+    expect(next.messages.length).toBeGreaterThan(1);
+    expect(next.messages.every((message) => message.text.length <= 260)).toBe(true);
+  });
+
   it("stores workspace change summaries in the transcript", () => {
     const next = reduceCodexEvent(initialState, {
       id: "4",
@@ -215,9 +315,53 @@ describe("reduceCodexEvent", () => {
       text: "Could not send the turn.",
     });
   });
+
+  it("removes empty assistant drafts when a turn completes without content", () => {
+    const started = reduceCodexEvent(initialState, {
+      id: "empty-1",
+      method: "turn/started",
+      message: null,
+      delta: null,
+      status: "running",
+      turnId: "turn-empty",
+      threadId: "thread-1",
+      activeModel: "gpt-5.4",
+      preview: null,
+      changeSummary: null,
+    });
+
+    const next = reduceCodexEvent(started, {
+      id: "empty-2",
+      method: "turn/completed",
+      message: null,
+      delta: null,
+      status: "completed",
+      turnId: "turn-empty",
+      threadId: "thread-1",
+      activeModel: "gpt-5.4",
+      preview: null,
+      changeSummary: null,
+    });
+
+    expect(next.messages).toHaveLength(0);
+  });
 });
 
 describe("reducer", () => {
+  it("defaults the preview viewport mode to desktop", () => {
+    expect(initialState.previewViewportMode).toBe("desktop");
+  });
+
+  it("updates the preview viewport mode without affecting other state", () => {
+    const next = reducer(initialState, {
+      type: "setPreviewViewportMode",
+      previewViewportMode: "phone",
+    });
+
+    expect(next.previewViewportMode).toBe("phone");
+    expect(next.preview.status).toBe(initialState.preview.status);
+  });
+
   it("commits a sent prompt and clears the composer", () => {
     const withComposer = reducer(initialState, {
       type: "setComposer",
@@ -288,5 +432,27 @@ describe("reducer", () => {
     expect(cleared.messages).toHaveLength(0);
     expect(cleared.changeSummaries).toHaveLength(0);
     expect(cleared.latestChangeSummary).toBeNull();
+  });
+
+  it("does not reset the preview viewport mode on preview state updates", () => {
+    const withPhoneMode = reducer(initialState, {
+      type: "setPreviewViewportMode",
+      previewViewportMode: "phone",
+    });
+    const next = reducer(withPhoneMode, {
+      type: "replacePreview",
+      preview: {
+        status: "ready",
+        workspacePath: "C:/repo",
+        command: "npm run dev",
+        url: "http://127.0.0.1:4173",
+        lastError: null,
+        pid: 42,
+        lastStartedAt: "1",
+        commandResolution: null,
+      },
+    });
+
+    expect(next.previewViewportMode).toBe("phone");
   });
 });

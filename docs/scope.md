@@ -23,6 +23,8 @@ The current first-pass milestone is:
 * on Windows, Codex CLI discovery should work against standard npm global shims such as `%APPDATA%\\npm\\codex.cmd` instead of assuming a Unix-style executable name only
 * on Windows, the desktop bridge should give Codex a managed app-local npm cache and temp directory so package installs and scaffolding do not depend on OneDrive-synced or user-global cache paths
 * the Codex desktop bridge must stay aligned with the live Codex app-server request contract, including current sandbox enum formats for `thread/start` and `turn/start`
+* the transcript should break long assistant replies into paragraph-sized bubbles so the chat rail reads like a sequence of updates instead of one wall of text
+* transcript diagnostics should stay out of the main chat rail by default, with raw error output tucked behind a collapsed diagnostics section instead of inline error bubbles
 
 This keeps the initial build focused on a reliable Codex desktop bridge before layering in the broader app-builder scope.
 
@@ -106,6 +108,7 @@ The UI explicitly communicates the agent's internal state to build trust:
 * **Local Iframe:** Points to the local Expo server (typically `localhost:8081`).
 * **Watchdog Layer:** A React wrapper pings the local port; if the server is booting or has crashed, it shows a branded skeleton loader/building state instead of a browser error.
 * **Current milestone behavior:** Draffiti auto-detects either an Expo web preview command or a generic `npm run dev` command for the picked workspace, while also allowing a manual override preview command in settings. Generic `npm run dev` detection should not force a synthetic port anymore; it should infer a URL from the declared script when possible and otherwise follow the URL printed by the dev server so wrapper scripts still preview correctly.
+* **Viewport switcher:** The preview footer includes desktop and phone viewport buttons that resize the local iframe canvas without restarting the preview process, letting users inspect responsive output inside the same live session.
 
 ### 6.2.1. Prompt Change Visibility
 

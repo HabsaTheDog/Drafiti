@@ -1,4 +1,4 @@
-import type { ChangeSummary, PreviewState } from "../types";
+import type { ChangeSummary, PreviewState, PreviewViewportMode } from "../types";
 import { PreviewFooterSummary } from "./PreviewFooterSummary";
 import { PreviewFrame } from "./PreviewFrame";
 import { PreviewToolbar } from "./PreviewToolbar";
@@ -6,9 +6,11 @@ import { PreviewToolbar } from "./PreviewToolbar";
 interface PreviewWorkspaceProps {
   workspacePath: string;
   preview: PreviewState;
+  previewViewportMode: PreviewViewportMode;
   latestChangeSummary: ChangeSummary | null;
   canStart: boolean;
   canRestart: boolean;
+  onPreviewViewportModeChange: (mode: PreviewViewportMode) => void;
   onStart: () => void;
   onRestart: () => void;
   onStop: () => void;
@@ -18,9 +20,11 @@ interface PreviewWorkspaceProps {
 export function PreviewWorkspace({
   workspacePath,
   preview,
+  previewViewportMode,
   latestChangeSummary,
   canStart,
   canRestart,
+  onPreviewViewportModeChange,
   onStart,
   onRestart,
   onStop,
@@ -39,9 +43,13 @@ export function PreviewWorkspace({
         onOpen={onOpen}
       />
       <div className="flex min-h-0 flex-1 px-5 py-5">
-        <PreviewFrame preview={preview} />
+        <PreviewFrame preview={preview} previewViewportMode={previewViewportMode} />
       </div>
-      <PreviewFooterSummary summary={latestChangeSummary} />
+      <PreviewFooterSummary
+        summary={latestChangeSummary}
+        previewViewportMode={previewViewportMode}
+        onPreviewViewportModeChange={onPreviewViewportModeChange}
+      />
     </div>
   );
 }

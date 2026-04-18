@@ -5,6 +5,7 @@ import type {
   CodexEventEnvelope,
   CodexStatus,
   PreviewState,
+  PreviewViewportMode,
   SessionState,
 } from "./types";
 
@@ -26,6 +27,7 @@ export interface AppState {
   pendingPrompt: string | null;
   selectedModel: string;
   activeView: "chat" | "preview";
+  previewViewportMode: PreviewViewportMode;
   isConnecting: boolean;
   isRefreshingStatus: boolean;
   isSavingSettings: boolean;
@@ -73,6 +75,7 @@ export const initialState: AppState = {
   pendingPrompt: null,
   selectedModel: "",
   activeView: "chat",
+  previewViewportMode: "desktop",
   isConnecting: false,
   isRefreshingStatus: false,
   isSavingSettings: false,
@@ -94,6 +97,7 @@ type Action =
   | { type: "setSelectedModel"; selectedModel: string }
   | { type: "setComposer"; composer: string }
   | { type: "setActiveView"; activeView: AppState["activeView"] }
+  | { type: "setPreviewViewportMode"; previewViewportMode: PreviewViewportMode }
   | { type: "setSettingsOpen"; open: boolean }
   | { type: "setRefreshingStatus"; value: boolean }
   | { type: "setSavingSettings"; value: boolean }
@@ -111,10 +115,10 @@ type Action =
 function makeMessage(
   kind: ChatMessage["kind"],
   text: string,
-  extras?: Pick<ChatMessage, "turnId" | "pending" | "changeSummary">,
+  extras?: Pick<ChatMessage, "turnId" | "pending" | "changeSummary" | "id">,
 ): ChatMessage {
   return {
-    id: `${kind}:${crypto.randomUUID()}`,
+    id: extras?.id ?? `${kind}:${crypto.randomUUID()}`,
     kind,
     text,
     createdAt: new Date().toISOString(),
@@ -131,21 +135,148 @@ function appendMessage(state: AppState, message: ChatMessage): AppState {
   };
 }
 
-function upsertAssistantDraft(messages: ChatMessage[], turnId: string | null): ChatMessage[] {
-  if (!turnId) {
-    return [...messages, makeMessage("assistant", "", { pending: true })];
+function matchesAssistantTurn(message: ChatMessage, turnId: string | null) {
+  return message.kind === "assistant" && (message.turnId ?? null) === turnId;
+}
+
+function splitAssistantText(text: string) {
+  const normalized = text.replace(/\r\n/g, "\n");
+  const lines = normalized.split("\n");
+  const rawSegments: string[] = [];
+  const current: string[] = [];
+  let inFence = false;
+  let pendingBlankLines = 0;
+
+  function flushSegment() {
+    const segment = current.join("\n").trim();
+    if (segment) {
+      rawSegments.push(segment);
+    }
+    current.length = 0;
+    pendingBlankLines = 0;
   }
 
-  const existingIndex = messages.findIndex(
-    (message) => message.kind === "assistant" && message.turnId === turnId,
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const fenceBoundary = trimmed.startsWith("```") || trimmed.startsWith("~~~");
+
+    if (!inFence && trimmed.length === 0) {
+      pendingBlankLines += 1;
+      continue;
+    }
+
+    if (pendingBlankLines > 0) {
+      if (inFence) {
+        current.push(...Array(pendingBlankLines).fill(""));
+      } else if (current.length > 0) {
+        flushSegment();
+      }
+      pendingBlankLines = 0;
+    }
+
+    current.push(line);
+    if (fenceBoundary) {
+      inFence = !inFence;
+    }
+  }
+
+  if (current.length > 0) {
+    flushSegment();
+  }
+
+  return rawSegments.flatMap(splitLongAssistantSegment);
+}
+
+function assistantSegmentId(turnId: string | null, index: number) {
+  return `assistant:${turnId ?? "draft"}:${index}`;
+}
+
+function splitLongAssistantSegment(segment: string) {
+  if (
+    segment.length <= 360 ||
+    segment.includes("\n") ||
+    segment.includes("```") ||
+    segment.includes("~~~")
+  ) {
+    return [segment];
+  }
+
+  const sentences = segment
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9`"'[(])/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  if (sentences.length <= 1) {
+    return [segment];
+  }
+
+  const chunks: string[] = [];
+  let current = "";
+
+  for (const sentence of sentences) {
+    const candidate = current ? `${current} ${sentence}` : sentence;
+    if (candidate.length > 260 && current) {
+      chunks.push(current);
+      current = sentence;
+      continue;
+    }
+    current = candidate;
+  }
+
+  if (current) {
+    chunks.push(current);
+  }
+
+  return chunks;
+}
+
+function buildAssistantMessages(text: string, turnId: string | null, pending: boolean) {
+  const segments = splitAssistantText(text);
+  if (segments.length === 0) {
+    return pending
+      ? [
+          makeMessage("assistant", "", {
+            pending: true,
+            ...(turnId ? { turnId } : {}),
+            id: assistantSegmentId(turnId, 0),
+          }),
+        ]
+      : [];
+  }
+
+  return segments.map((segment, index) =>
+    makeMessage("assistant", segment, {
+      ...(turnId ? { turnId } : {}),
+      pending: pending && index === segments.length - 1,
+      id: assistantSegmentId(turnId, index),
+    }),
   );
-  if (existingIndex >= 0) {
-    return messages.map((message, index) =>
-      index === existingIndex ? { ...message, pending: true } : message,
-    );
+}
+
+function collectAssistantTurnText(messages: ChatMessage[], turnId: string | null) {
+  return messages
+    .filter((message) => matchesAssistantTurn(message, turnId))
+    .map((message) => message.text)
+    .join("\n\n");
+}
+
+function replaceAssistantTurnMessages(
+  messages: ChatMessage[],
+  turnId: string | null,
+  replacements: ChatMessage[],
+): ChatMessage[] {
+  const firstIndex = messages.findIndex((message) => matchesAssistantTurn(message, turnId));
+  if (firstIndex === -1) {
+    return [...messages, ...replacements];
   }
 
-  return [...messages, makeMessage("assistant", "", { pending: true, turnId })];
+  const nextMessages = messages.filter((message) => !matchesAssistantTurn(message, turnId));
+  nextMessages.splice(firstIndex, 0, ...replacements);
+  return nextMessages;
+}
+
+function upsertAssistantDraft(messages: ChatMessage[], turnId: string | null): ChatMessage[] {
+  return replaceAssistantTurnMessages(messages, turnId, buildAssistantMessages("", turnId, true));
 }
 
 function appendAssistantDelta(
@@ -153,36 +284,37 @@ function appendAssistantDelta(
   turnId: string | null,
   delta: string,
 ): ChatMessage[] {
-  const existingIndex = turnId
-    ? messages.findIndex((message) => message.kind === "assistant" && message.turnId === turnId)
-    : -1;
-
-  if (existingIndex === -1) {
-    return [
-      ...messages,
-      makeMessage("assistant", delta, {
-        pending: true,
-        ...(turnId ? { turnId } : {}),
-      }),
-    ];
-  }
-
-  return messages.map((message, index) =>
-    index === existingIndex
-      ? {
-          ...message,
-          text: `${message.text}${delta}`,
-          pending: true,
-        }
-      : message,
+  const nextText = `${collectAssistantTurnText(messages, turnId)}${delta}`;
+  return replaceAssistantTurnMessages(
+    messages,
+    turnId,
+    buildAssistantMessages(nextText, turnId, true),
   );
 }
 
 function finalizeAssistant(messages: ChatMessage[], turnId: string | null): ChatMessage[] {
-  return messages.map((message) =>
-    message.kind === "assistant" && (!turnId || message.turnId === turnId)
-      ? { ...message, pending: false }
-      : message,
+  const finalizedTurnIds = turnId
+    ? [turnId]
+    : Array.from(
+        new Set(
+          messages
+            .filter((message) => message.kind === "assistant")
+            .map((message) => message.turnId ?? null),
+        ),
+      );
+
+  return finalizedTurnIds.reduce(
+    (nextMessages, currentTurnId) =>
+      replaceAssistantTurnMessages(
+        nextMessages,
+        currentTurnId,
+        buildAssistantMessages(
+          collectAssistantTurnText(nextMessages, currentTurnId),
+          currentTurnId,
+          false,
+        ),
+      ),
+    messages,
   );
 }
 
@@ -460,6 +592,11 @@ export function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         activeView: action.activeView,
+      };
+    case "setPreviewViewportMode":
+      return {
+        ...state,
+        previewViewportMode: action.previewViewportMode,
       };
     case "setSettingsOpen":
       return {

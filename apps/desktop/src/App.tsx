@@ -390,9 +390,13 @@ export default function App() {
             <PreviewWorkspace
               workspacePath={state.workspacePath}
               preview={state.preview}
+              previewViewportMode={state.previewViewportMode}
               latestChangeSummary={state.latestChangeSummary}
               canStart={canStartPreview}
               canRestart={canRestartPreview}
+              onPreviewViewportModeChange={(previewViewportMode) =>
+                dispatch({ type: "setPreviewViewportMode", previewViewportMode })
+              }
               onStart={handleStartPreview}
               onRestart={handleRestartPreview}
               onStop={handleStopPreview}

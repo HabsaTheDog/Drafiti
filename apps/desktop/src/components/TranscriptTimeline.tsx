@@ -31,6 +31,9 @@ export function TranscriptTimeline({
   messages,
   transcriptRef,
 }: TranscriptTimelineProps) {
+  const visibleMessages = messages.filter((message) => message.kind !== "error");
+  const diagnostics = messages.filter((message) => message.kind === "error");
+
   return (
     <div ref={transcriptRef} className="scrollbar-subtle flex-1 space-y-4 overflow-y-auto px-5 py-5">
       {bootstrapping ? (
@@ -41,7 +44,7 @@ export function TranscriptTimeline({
         <div className="rounded-[28px] border border-flare-500/24 bg-flare-500/10 p-6 text-sm text-flare-400">
           {bootstrapError}
         </div>
-      ) : messages.length === 0 ? (
+      ) : visibleMessages.length === 0 ? (
         <div className="flex min-h-[20rem] items-center justify-center">
           <div className="max-w-md rounded-[30px] border border-dashed border-white/10 bg-white/3 p-8 text-center">
             <p className="text-[11px] uppercase tracking-[0.34em] text-sand-300/42">Transcript</p>
@@ -53,7 +56,7 @@ export function TranscriptTimeline({
           </div>
         </div>
       ) : (
-        messages.map((message) =>
+        visibleMessages.map((message) =>
           message.kind === "changeSummary" && message.changeSummary ? (
             <ChangeSummaryCard key={message.id} summary={message.changeSummary} />
           ) : (
@@ -74,6 +77,25 @@ export function TranscriptTimeline({
           ),
         )
       )}
+      {diagnostics.length > 0 ? (
+        <details className="rounded-[24px] border border-white/8 bg-white/3 px-4 py-3">
+          <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.24em] text-sand-300/56">
+            Diagnostics hidden ({diagnostics.length})
+          </summary>
+          <div className="mt-3 space-y-3">
+            {diagnostics.map((message) => (
+              <article
+                key={message.id}
+                className="rounded-[20px] border border-flare-500/18 bg-flare-500/8 px-4 py-3 text-sm text-flare-300/84"
+              >
+                <pre className="m-0 whitespace-pre-wrap break-words font-[inherit] leading-6">
+                  {message.text}
+                </pre>
+              </article>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

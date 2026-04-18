@@ -1,14 +1,38 @@
-import type { PreviewState } from "../types";
+import type { PreviewState, PreviewViewportMode } from "../types";
 
-export function PreviewFrame({ preview }: { preview: PreviewState }) {
+interface PreviewFrameProps {
+  preview: PreviewState;
+  previewViewportMode: PreviewViewportMode;
+}
+
+export function PreviewFrame({ preview, previewViewportMode }: PreviewFrameProps) {
   if (preview.status === "ready" && preview.url) {
     return (
-      <iframe
-        key={preview.url}
-        title="Website preview"
-        src={preview.url}
-        className="block h-full min-h-0 w-full rounded-[28px] border border-white/8 bg-white"
-      />
+      <div className="flex h-full w-full min-h-0 items-center justify-center overflow-hidden">
+        <div
+          data-testid="preview-viewport-shell"
+          data-viewport-mode={previewViewportMode}
+          className={`relative flex h-full min-h-0 w-full justify-center overflow-hidden transition-[max-width,padding,transform,border-radius] duration-300 ease-out ${
+            previewViewportMode === "phone"
+              ? "max-w-[390px] rounded-[36px] border border-white/12 bg-ink-950/92 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.38)]"
+              : "max-w-full"
+          }`}
+        >
+          {previewViewportMode === "phone" ? (
+            <div className="pointer-events-none absolute left-1/2 top-3 z-10 h-1.5 w-20 -translate-x-1/2 rounded-full bg-white/14" />
+          ) : null}
+          <iframe
+            key={preview.url}
+            title="Website preview"
+            src={preview.url}
+            className={`block h-full min-h-0 w-full bg-white ${
+              previewViewportMode === "phone"
+                ? "rounded-[30px]"
+                : "rounded-[28px] border border-white/8"
+            }`}
+          />
+        </div>
+      </div>
     );
   }
 

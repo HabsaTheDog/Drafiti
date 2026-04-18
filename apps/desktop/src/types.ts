@@ -2,6 +2,7 @@ export type CodexStatusKind = "ready" | "unauthenticated" | "notInstalled" | "er
 export type SessionStatus = "disconnected" | "connecting" | "ready" | "running" | "error";
 export type PreviewStatus = "idle" | "booting" | "ready" | "crashed";
 export type PreviewCommandSource = "manual" | "expo" | "npmDev" | "none";
+export type PreviewViewportMode = "desktop" | "phone";
 
 export interface CodexStatus {
   status: CodexStatusKind;

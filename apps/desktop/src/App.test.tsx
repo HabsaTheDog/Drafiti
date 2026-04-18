@@ -115,7 +115,36 @@ describe("App", () => {
 
     expect(await screen.findByText("Policy")).toBeInTheDocument();
     expect(screen.getByText("Start the local site preview.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Desktop preview" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Phone preview" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
     await waitFor(() => expect(tauriMocks.startPreview).toHaveBeenCalledTimes(1));
+  });
+
+  it("switches preview viewport modes without restarting the preview", async () => {
+    render(<App />);
+
+    await waitFor(() => expect(tauriMocks.startPreview).toHaveBeenCalledTimes(1));
+
+    const desktopButton = screen.getByRole("button", { name: "Desktop preview" });
+    const phoneButton = screen.getByRole("button", { name: "Phone preview" });
+
+    fireEvent.click(phoneButton);
+    expect(phoneButton).toHaveAttribute("aria-pressed", "true");
+    expect(desktopButton).toHaveAttribute("aria-pressed", "false");
+    expect(tauriMocks.startPreview).toHaveBeenCalledTimes(1);
+    expect(tauriMocks.restartPreview).not.toHaveBeenCalled();
+
+    fireEvent.click(desktopButton);
+    expect(desktopButton).toHaveAttribute("aria-pressed", "true");
+    expect(phoneButton).toHaveAttribute("aria-pressed", "false");
+    expect(tauriMocks.startPreview).toHaveBeenCalledTimes(1);
+    expect(tauriMocks.restartPreview).not.toHaveBeenCalled();
   });
 
   it("connects to Codex with the selected model", async () => {
