@@ -1,0 +1,20 @@
+{
+  "name": "draffiti",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "lint": "npm run lint:md && npm run lint:code && npm run lint:rust",
+    "lint:fix": "npm run lint:md:fix && npm run lint:code:fix && npm run lint:rust:fix",
+    "lint:md": "markdownlint \"**/*.md\" --ignore \"**/node_modules/**\" --ignore \"**/.git/**\"",
+    "lint:md:fix": "markdownlint \"**/*.md\" --fix --ignore \"**/node_modules/**\" --ignore \"**/.git/**\"",
+    "lint:code": "node scripts/workspace-runner.mjs lint",
+    "lint:code:fix": "node scripts/workspace-runner.mjs lint:fix",
+    "lint:rust": "node scripts/rust-runner.mjs lint",
+    "lint:rust:fix": "node scripts/rust-runner.mjs fix",
+    "typecheck": "node scripts/workspace-runner.mjs typecheck",
+    "check": "npm run lint && npm run typecheck"
+  },
+  "devDependencies": {
+    "markdownlint-cli": "0.48.0"
+  }
+}
