@@ -2,6 +2,12 @@
 
 This file is the quick reference for the repository validation flow.
 
+## Current Build Status
+
+The Windows desktop build and dev flow should currently be treated as broken when the repository or selected workspace lives under a non-ASCII path.
+
+The current checkout path (`C:\Users\user1\OneDrive\Документи\Development Alvaro\Draffiti`) matches that failure mode, so local desktop build and validation work from this checkout is considered broken until the repo is moved to an ASCII-only path or Windows short-path aliases are available.
+
 Current root commands:
 
 * `npm run desktop:dev`
@@ -19,6 +25,7 @@ Expected agent behavior:
 Current behavior:
 
 * `npm run desktop:dev` runs the Tauri desktop workspace in dev mode from the repo root and, on Windows, also loads the Visual Studio native build environment automatically when `vcvars64.bat` is available
+* the desktop workspace `npm run dev` wrapper now reuses an already-running Vite server on port `1420`, including older localhost or IPv6 listeners from earlier runs, instead of failing immediately on a stale-port restart; if some other process owns that port, it exits with a direct conflict message
 * `npm run lint` runs Markdown linting, code linting, and Rust linting
 * the Rust lint step now also attempts to load the Visual Studio native build environment automatically on Windows before running Cargo
 * Windows desktop and Rust validation scripts default `CARGO_BUILD_JOBS=1` when the variable is unset, reducing peak RAM usage during local Tauri compilation; set `CARGO_BUILD_JOBS` yourself to override it
